@@ -3,6 +3,7 @@ package com.example.Web_sale_app.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -49,18 +50,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/user/register",
-                                "/user/login"
-                        ).permitAll()
+                        // swagger
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // catalog (public)
                         .requestMatchers("/api/catalog/**").permitAll()
+                        // cart (cho phép cả GET/POST/DELETE; tùy bạn giới hạn thêm)
+                        .requestMatchers("/api/cart/**").permitAll()
+                        // preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // còn lại cần auth
                         .anyRequest().authenticated()
-                )
-                .httpBasic(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                );
         return http.build();
     }
 

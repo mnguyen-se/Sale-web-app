@@ -1,7 +1,7 @@
 package com.example.Web_sale_app.controller;
 
+import com.example.Web_sale_app.dto.ProductDTO;
 import com.example.Web_sale_app.entity.Category;
-import com.example.Web_sale_app.entity.Product;
 import com.example.Web_sale_app.service.CatalogService;
 import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +26,9 @@ public class CatalogController {
         return catalogService.listCategories();
     }
 
-    // 2) Tìm kiếm & lọc & sắp xếp sản phẩm
+    // 2) Tìm kiếm & lọc & sắp xếp sản phẩm (trả DTO)
     @GetMapping("/products")
-    public Page<Product> listProducts(
+    public Page<ProductDTO> listProducts(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) BigDecimal minPrice,
@@ -44,9 +44,9 @@ public class CatalogController {
         return catalogService.listProducts(categoryId, q, minPrice, maxPrice, pageable);
     }
 
-    // 3) Alias theo danh mục
+    // 3) Alias theo danh mục (cùng trả DTO cho nhất quán)
     @GetMapping("/categories/{categoryId}/products")
-    public Page<Product> listProductsByCategory(
+    public Page<ProductDTO> listProductsByCategory(
             @PathVariable Long categoryId,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) BigDecimal minPrice,
@@ -62,10 +62,10 @@ public class CatalogController {
         return catalogService.listProducts(categoryId, q, minPrice, maxPrice, pageable);
     }
 
-    // 4) Chi tiết sản phẩm
+    // 4) Chi tiết sản phẩm (nên trả DTO)
     @GetMapping("/products/{id}")
-    public ResponseEntity<Product> getProductDetail(@PathVariable Long id) {
-        return catalogService.getProductDetail(id)
+    public ResponseEntity<ProductDTO> getProductDetail(@PathVariable Long id) {
+        return catalogService.getProductDetailDTO(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
