@@ -22,7 +22,7 @@ public class Notification {
     @Column(nullable = false)
     private String message;
 
-    private Boolean read;
+    private Boolean isRead;
 
     // getters & setters
 }

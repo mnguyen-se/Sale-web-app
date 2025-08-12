@@ -1,11 +1,13 @@
 package com.example.Web_sale_app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -37,6 +39,10 @@ public class User {
 
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @OneToMany(mappedBy = "user")
+    @JsonIgnore
+    private List<Notification> notifications;
 
     // getters & setters
 }
