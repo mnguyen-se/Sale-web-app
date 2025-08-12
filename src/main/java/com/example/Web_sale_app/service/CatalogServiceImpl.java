@@ -1,4 +1,4 @@
-package com.example.Web_sale_app.service.impl;
+package com.example.Web_sale_app.service;
 
 import com.example.Web_sale_app.entity.Category;
 import com.example.Web_sale_app.entity.Product;
