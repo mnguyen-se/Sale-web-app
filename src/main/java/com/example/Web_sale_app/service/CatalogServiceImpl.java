@@ -4,7 +4,6 @@ import com.example.Web_sale_app.entity.Category;
 import com.example.Web_sale_app.entity.Product;
 import com.example.Web_sale_app.repository.CategoryRepository;
 import com.example.Web_sale_app.repository.ProductRepository;
-import com.example.Web_sale_app.service.CatalogService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
