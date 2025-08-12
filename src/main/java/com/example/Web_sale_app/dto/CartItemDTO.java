@@ -7,5 +7,6 @@ public record CartItemDTO(
         Long productId,
         String productName,
         Integer quantity,
-        BigDecimal price // đơn giá hiện tại của sản phẩm
+        BigDecimal price,      // đơn giá hiện tại
+        BigDecimal lineTotal   // price * quantity
 ) {}

@@ -13,6 +13,7 @@ import com.example.Web_sale_app.service.CartService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -103,13 +104,18 @@ public class CartServiceImpl implements CartService {
         List<CartItemDTO> items = new ArrayList<>();
         // Nên load lại từ DB để phản ánh số liệu mới nhất
         cartItemRepository.findByCart_IdAndProduct_Id(cart.getId(), product.getId())
-                .ifPresent(updated -> items.add(new CartItemDTO(
-                        updated.getId(),
-                        updated.getProduct().getId(),
-                        updated.getProduct().getName(),
-                        updated.getQuantity(),
-                        updated.getProduct().getPrice()
-                )));
+                .ifPresent(updated -> {
+                    var unitPrice = updated.getProduct().getPrice();
+                    var lineTotal = unitPrice.multiply(BigDecimal.valueOf(updated.getQuantity()));
+                    items.add(new CartItemDTO(
+                            updated.getId(),
+                            updated.getProduct().getId(),
+                            updated.getProduct().getName(),
+                            updated.getQuantity(),
+                            unitPrice,
+                            lineTotal
+                    ));
+                });
 
         return new AddToCartResponse(
                 cart.getId(),
