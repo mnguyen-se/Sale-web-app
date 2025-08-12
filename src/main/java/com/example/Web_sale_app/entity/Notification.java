@@ -1,7 +1,13 @@
 package com.example.Web_sale_app.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "notifications")
 public class Notification {
