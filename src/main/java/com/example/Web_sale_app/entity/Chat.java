@@ -1,15 +1,15 @@
 package com.example.Web_sale_app.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "chats")
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 public class Chat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

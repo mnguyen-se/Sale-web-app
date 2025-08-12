@@ -1,17 +1,18 @@
 package com.example.Web_sale_app.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "products")
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,4 +42,6 @@ public class Product {
 
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    // getters & setters
 }
