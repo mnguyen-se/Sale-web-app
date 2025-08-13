@@ -22,6 +22,9 @@ public class UserService {
     AuthenticationManager authManager;
 
     @Autowired
+    private JWTService jwtService;
+
+    @Autowired
     private SecurityConfig config;
 
     public User register(User user){
@@ -41,7 +44,7 @@ public class UserService {
                         reqLoginDTO.getPassword()));
         System.out.println(reqLoginDTO.getPassword());
         if(authentication.isAuthenticated())
-            return "Success";
+            return jwtService.generateToken(reqLoginDTO.getUsername());
         else
             return "Fail";
     }

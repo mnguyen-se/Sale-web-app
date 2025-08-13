@@ -28,4 +28,9 @@ public class UserController {
         return userService.verify(reqLoginDTO);
     }
 
+    @GetMapping("/All")
+    public List<User> findAllUsers(){
+        return userService.findAllUsers();
+    }
+
 }
