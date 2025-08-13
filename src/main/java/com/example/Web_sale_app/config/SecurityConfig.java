@@ -63,6 +63,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/cart/**").permitAll()
                         // preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        //đăng ký và đăng nhập
                         .requestMatchers("/user/register", "/user/login").permitAll()
                         // còn lại cần auth
                         .anyRequest().authenticated()
