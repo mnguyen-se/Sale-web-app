@@ -1,5 +1,6 @@
 package com.example.Web_sale_app.config;
 
+import com.example.Web_sale_app.service.impl.OAuth2UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtFilter jwtFilter;
+
+    @Autowired
+    private OAuth2UserServiceImpl oAuth2UserService;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -66,11 +70,17 @@ public class SecurityConfig {
                         //đăng ký và đăng nhập
                         .requestMatchers("/user/register", "/user/login").permitAll()
                         // còn lại cần auth
+                        .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
+                .oauth2Login(oauth2 -> oauth2.userInfoEndpoint(
+                        userInfo -> userInfo.userService(oAuth2UserService)
+                ))
                 .httpBasic(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        System.out.println("SecurityFilterChain bean initialized");
         return http.build();
     }
 

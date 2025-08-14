@@ -2,6 +2,7 @@ package com.example.Web_sale_app.service;
 
 import com.example.Web_sale_app.config.SecurityConfig;
 import com.example.Web_sale_app.entity.ReqDTO.ReqLoginDTO;
+import com.example.Web_sale_app.entity.ReqDTO.ReqRegisterDTO;
 import com.example.Web_sale_app.entity.User;
 import com.example.Web_sale_app.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -27,8 +29,14 @@ public class UserService {
     @Autowired
     private SecurityConfig config;
 
-    public User register(User user){
-        user.setPassword(config.bCryptPasswordEncoder().encode(user.getPassword()));
+    public User register(ReqRegisterDTO req){
+        req.setPassword(config.bCryptPasswordEncoder().encode(req.getPassword()));
+        User user = new User();
+        user.setUsername(req.getUsername());
+        user.setEmail(req.getEmail());
+        user.setPassword(req.getPassword());
+        user.setRole("customer");
+        user.setCreatedAt(OffsetDateTime.now());
         return userRepository.save(user);
     }
 
@@ -48,4 +56,5 @@ public class UserService {
         else
             return "Fail";
     }
+
 }
