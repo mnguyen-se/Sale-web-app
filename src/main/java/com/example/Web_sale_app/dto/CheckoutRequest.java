@@ -8,12 +8,11 @@ public record CheckoutRequest(
         String fullName,
         String phone,
         String email,
-        String addressLine1,
-        String addressLine2,
+        String address,
         String ward,
         String district,
         String province,
-        String postalCode,
+        String voucher,
         PaymentMethod paymentMethod // COD / ONLINE
 ) {}
 
