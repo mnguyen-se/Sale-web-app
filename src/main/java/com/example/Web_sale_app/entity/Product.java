@@ -29,6 +29,10 @@ public class Product {
     @Column(nullable = false)
     private Integer stock;
 
+    @Column(name = "manufacturer")
+    private String manufacturer;
+
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
