@@ -30,7 +30,7 @@ public class CatalogController {
     @GetMapping("/products")
     public Page<ProductDTO> listProducts(
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(defaultValue = "createdAt") String sort,
@@ -41,7 +41,7 @@ public class CatalogController {
         String sortField = switch (sort) { case "name" -> "name"; case "price" -> "price"; default -> "createdAt"; };
         Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), Sort.by(direction, sortField));
-        return catalogService.listProducts(categoryId, q, minPrice, maxPrice, pageable);
+        return catalogService.listProducts(categoryId, search, minPrice, maxPrice, pageable);
     }
 
     // 3) Alias theo danh mục (cùng trả DTO cho nhất quán)

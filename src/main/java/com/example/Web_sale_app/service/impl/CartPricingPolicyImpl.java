@@ -1,12 +1,12 @@
 package com.example.Web_sale_app.service.impl;
 
-import com.example.Web_sale_app.service.CartPricingPolicy;
+import com.example.Web_sale_app.service.CartCommandService;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
 @Component
-public class CartPricingPolicyImpl implements CartPricingPolicy {
+public class CartPricingPolicyImpl implements CartCommandService.CartPricingPolicy {
     private static final BigDecimal FREE_SHIP_THRESHOLD = new BigDecimal("500000"); // >=500k miễn ship
     private static final BigDecimal FLAT_SHIP = new BigDecimal("30000");
     @Override

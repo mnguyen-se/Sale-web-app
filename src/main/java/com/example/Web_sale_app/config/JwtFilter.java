@@ -31,33 +31,44 @@ public class JwtFilter extends OncePerRequestFilter {
 
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-        String token = null;
-        String username = null;
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
         String path = request.getServletPath();
-
+        // Bỏ qua các đường dẫn public rõ ràng (tuỳ chọn, để tối ưu)
         if (path.startsWith("/login/oauth2") || path.startsWith("/oauth2") || path.startsWith("/error")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if(authHeader != null && authHeader.startsWith("Bearer ")){
+        String authHeader = request.getHeader("Authorization");
+        String token = null;
+        String username = null;
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
-            username = jwtService.extractUsername(token);
-        }
-
-        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            UserDetails userDetails = context.getBean(MyUsersDetailService.class).loadUserByUsername(username);
-
-            if(jwtService.validateToken(token, userDetails)){
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            try {
+                username = jwtService.extractUsername(token);
+            } catch (Exception ignored) {
+                // Token sai/expired/format lỗi -> bỏ qua, KHÔNG chặn request
             }
         }
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = context.getBean(MyUsersDetailService.class).loadUserByUsername(username);
+            try {
+                if (jwtService.validateToken(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            } catch (Exception ignored) {
+                // validate lỗi -> coi như không đăng nhập, cho request đi tiếp
+            }
+        }
+
         filterChain.doFilter(request, response);
     }
+
 }

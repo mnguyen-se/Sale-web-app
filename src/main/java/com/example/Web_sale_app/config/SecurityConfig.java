@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -17,6 +18,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -58,29 +60,34 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 👈 API JWT chuẩn
                 .authorizeHttpRequests(auth -> auth
-                        // swagger
+                        // Swagger
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // catalog (public)
+
+                        // Public catalog & cart
                         .requestMatchers("/api/catalog/**").permitAll()
-                        // cart (cho phép cả GET/POST/DELETE; tùy bạn giới hạn thêm)
-                        .requestMatchers("/api/cart/**").permitAll()
-                        // preflight
+                        .requestMatchers("/api/cart/**").permitAll()  // đã đủ, không cần lặp lại POST /add
+
+                        // Preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        //đăng ký và đăng nhập
+
+                        // Auth
                         .requestMatchers("/user/register", "/user/login").permitAll()
-                        // còn lại cần auth
+
+                        // OAuth2 endpoints
                         .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
 
+                        .requestMatchers(HttpMethod.POST, "/api/checkout").permitAll()
+                        // Còn lại cần auth
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth2 -> oauth2.userInfoEndpoint(
-                        userInfo -> userInfo.userService(oAuth2UserService)
-                ))
-                .httpBasic(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                // Nếu không dùng httpBasic, có thể bỏ:
+                //.httpBasic(Customizer.withDefaults())
+                .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .oauth2Login(oauth2 -> oauth2.userInfoEndpoint(u -> u.userService(oAuth2UserService)))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-        System.out.println("SecurityFilterChain bean initialized");
+
         return http.build();
     }
 

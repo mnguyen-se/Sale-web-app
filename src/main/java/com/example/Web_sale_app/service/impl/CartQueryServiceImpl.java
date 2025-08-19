@@ -4,22 +4,21 @@ import com.example.Web_sale_app.dto.CartItemDTO;
 import com.example.Web_sale_app.dto.CartSummaryDTO;
 import com.example.Web_sale_app.entity.CartItem;
 import com.example.Web_sale_app.repository.CartItemRepository;
-import com.example.Web_sale_app.service.CartPricingPolicy;
+import com.example.Web_sale_app.service.CartCommandService;
 import com.example.Web_sale_app.service.CartQueryService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
 public class CartQueryServiceImpl implements CartQueryService {
 
     private final CartItemRepository cartItemRepository;
-    private final CartPricingPolicy pricing;
+    private final CartCommandService.CartPricingPolicy pricing;
 
-    public CartQueryServiceImpl(CartItemRepository cartItemRepository, CartPricingPolicy pricing) {
+    public CartQueryServiceImpl(CartItemRepository cartItemRepository, CartCommandService.CartPricingPolicy pricing) {
         this.cartItemRepository = cartItemRepository;
         this.pricing = pricing;
     }

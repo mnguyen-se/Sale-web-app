@@ -1,9 +1,10 @@
-package com.example.Web_sale_app.service;
+package com.example.Web_sale_app.service.impl;
 
 import com.example.Web_sale_app.dto.ProductDTO;
 import com.example.Web_sale_app.entity.Product;
 import com.example.Web_sale_app.repository.CategoryRepository;
 import com.example.Web_sale_app.repository.ProductRepository;
+import com.example.Web_sale_app.service.CatalogService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -40,7 +41,12 @@ public class CatalogServiceImpl implements CatalogService {
             }
             if (q != null && !q.isBlank()) {
                 String like = "%" + q.trim().toLowerCase() + "%";
-                predicates.add(cb.like(cb.lower(root.get("name")), like));
+                predicates.add(
+                        cb.or(
+                                cb.like(cb.lower(root.get("name")), like),
+                                cb.like(cb.lower(root.get("manufacturer")), like)
+                        )
+                );
             }
             if (minPrice != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));

@@ -3,8 +3,15 @@ package com.example.Web_sale_app.controller;
 import com.example.Web_sale_app.dto.*;
 import com.example.Web_sale_app.service.CartCommandService;
 import com.example.Web_sale_app.service.CartQueryService;
+import com.example.Web_sale_app.service.CartService;
+import com.example.Web_sale_app.util.SecurityUtils;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
 
 @RestController
 @RequestMapping("/api/cart")
@@ -12,11 +19,15 @@ public class CartController {
 
     private final CartCommandService cartCommandService;
     private final CartQueryService cartQueryService;
+    private final CartService cartService;
 
-    public CartController(CartCommandService cartCommandService, CartQueryService cartQueryService) {
-        this.cartCommandService = cartCommandService;
-        this.cartQueryService = cartQueryService;
-    }
+    public CartController(CartCommandService cartCommandService,
+                          CartQueryService cartQueryService,
+                         CartService cartService) {
+                this.cartCommandService = cartCommandService;
+                this.cartQueryService = cartQueryService;
+               this.cartService = cartService;
+           }
 
     // UC5.1: Xem giỏ
     @GetMapping("/{cartId}")
@@ -54,4 +65,17 @@ public class CartController {
                                                              @RequestBody ApplyVoucherRequest req) {
         return ResponseEntity.ok(cartCommandService.applyVoucher(cartId, req));
     }
+
+    @PostMapping("/add")
+    public ResponseEntity<AddToCartResponse> addToCart(@RequestBody @Valid AddToCartRequest req) {
+        // req: { cartId?, productId, quantity }
+        // BE sẽ:
+        // - Nếu cartId == null: tạo giỏ mới, thêm hàng vào, trả về cartId mới
+        // - Nếu cartId != null: thêm/cộng dồn vào giỏ hiện có
+        AddToCartResponse res = cartService.addItem(req);
+        return ResponseEntity.ok(res);
+    }
+
+
+
 }

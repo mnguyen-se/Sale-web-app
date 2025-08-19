@@ -28,6 +28,10 @@ public class Order {
     @Column(nullable = false)
     private String status; // pending, paid, shipped...
 
+    @ManyToOne
+    @JoinColumn(name = "voucher_id")
+    private Voucher voucher;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
