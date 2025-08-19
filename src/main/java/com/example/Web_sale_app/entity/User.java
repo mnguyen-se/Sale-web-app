@@ -31,6 +31,8 @@ public class User {
 
     private String password;
 
+    private boolean enabled = false;
+
     @Column(nullable = false)
     private String role; // customer, seller, admin
 

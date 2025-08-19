@@ -1,16 +1,15 @@
 package com.example.Web_sale_app.controller;
 
 import com.example.Web_sale_app.entity.ReqDTO.ReqLoginDTO;
+import com.example.Web_sale_app.entity.ReqDTO.ReqRegisterDTO;
+import com.example.Web_sale_app.entity.User;
 import com.example.Web_sale_app.service.AuthService;
 import com.example.Web_sale_app.service.BlacklistService;
 import com.example.Web_sale_app.service.UserService;
 import com.example.Web_sale_app.service.impl.AuthServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -18,11 +17,9 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final BlacklistService blacklistService;
-    private final UserService userService;
     private final AuthService authService;
-    public AuthController(BlacklistService blacklistService, UserService userService, AuthService authService) {
+    public AuthController(BlacklistService blacklistService, AuthService authService) {
         this.blacklistService = blacklistService;
-        this.userService = userService;
         this.authService = authService;
     }
     @PostMapping("/login")
@@ -40,5 +37,19 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
 
+    @PostMapping("/register")
+    public String register(@RequestBody ReqRegisterDTO req){
+        return authService.register(req);
+    }
 
+    @GetMapping("/confirm")
+    public ResponseEntity<String> confirm(@RequestParam("token") String token) {
+        // logic xác thực token
+        boolean success = authService.confirm(token);
+        if (success) {
+            return ResponseEntity.ok("Account confirmed!");
+        } else {
+            return ResponseEntity.badRequest().body("Invalid token");
+        }
+    }
 }

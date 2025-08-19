@@ -12,23 +12,8 @@ import java.util.List;
 @Service
 public class UserService {
     private final UserRepository userRepository;
-
-    private final SecurityConfig config;
-
-    public UserService(UserRepository userRepository, SecurityConfig config) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.config = config;
-    }
-
-    public User register(ReqRegisterDTO req){
-        req.setPassword(config.bCryptPasswordEncoder().encode(req.getPassword()));
-        User user = new User();
-        user.setUsername(req.getUsername());
-        user.setEmail(req.getEmail());
-        user.setPassword(req.getPassword());
-        user.setRole("customer");
-        user.setCreatedAt(OffsetDateTime.now());
-        return userRepository.save(user);
     }
 
     public List<User> findAllUsers(){

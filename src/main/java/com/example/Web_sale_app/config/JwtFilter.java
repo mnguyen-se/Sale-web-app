@@ -58,6 +58,12 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         }
 
+        if (request.getRequestURI().startsWith("/api/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = context.getBean(MyUsersDetailService.class).loadUserByUsername(username);
             try {

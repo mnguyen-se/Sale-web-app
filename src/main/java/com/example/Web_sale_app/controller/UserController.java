@@ -19,11 +19,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/register")
-    public User register(@RequestBody ReqRegisterDTO req){
-        return userService.register(req);
-    }
-
     @GetMapping("/All")
     public List<User> findAllUsers(){
         return userService.findAllUsers();

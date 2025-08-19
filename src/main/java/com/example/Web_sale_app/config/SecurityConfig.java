@@ -47,7 +47,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173")); // domain frontend
+        config.setAllowedOrigins(List.of("http://localhost:5173"));// domain frontend
+        config.addAllowedOriginPattern("*");
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true); // nếu gửi cookie hoặc header Authorization
@@ -75,7 +76,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Auth
-                        .requestMatchers("/user/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
 
                         // OAuth2 endpoints
                         .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
@@ -84,12 +85,6 @@ public class SecurityConfig {
                         // Còn lại cần auth
                         .anyRequest().authenticated()
                 )
-                .logout(l -> l.logoutUrl("/logout")
-                        .logoutSuccessHandler((request, respone, authentication) -> {
-                            respone.setStatus(HttpServletResponse.SC_OK);
-                            respone.setContentType("application/json");
-                            respone.getWriter().write("{\"message\": \"Logout successful\"}");
-                        }))
                 // Nếu không dùng httpBasic, có thể bỏ:
                 //.httpBasic(Customizer.withDefaults())
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
