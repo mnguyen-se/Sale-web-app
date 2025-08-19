@@ -1,6 +1,8 @@
 package com.example.Web_sale_app.config;
 
 import com.example.Web_sale_app.service.impl.OAuth2UserServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -73,7 +75,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Auth
-                        .requestMatchers("/user/register", "/user/login").permitAll()
+                        .requestMatchers("/user/register", "/api/auth/login").permitAll()
 
                         // OAuth2 endpoints
                         .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
@@ -82,6 +84,12 @@ public class SecurityConfig {
                         // Còn lại cần auth
                         .anyRequest().authenticated()
                 )
+                .logout(l -> l.logoutUrl("/logout")
+                        .logoutSuccessHandler((request, respone, authentication) -> {
+                            respone.setStatus(HttpServletResponse.SC_OK);
+                            respone.setContentType("application/json");
+                            respone.getWriter().write("{\"message\": \"Logout successful\"}");
+                        }))
                 // Nếu không dùng httpBasic, có thể bỏ:
                 //.httpBasic(Customizer.withDefaults())
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))

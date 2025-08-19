@@ -1,15 +1,9 @@
 package com.example.Web_sale_app.service;
 
 import com.example.Web_sale_app.config.SecurityConfig;
-import com.example.Web_sale_app.entity.ReqDTO.ReqLoginDTO;
 import com.example.Web_sale_app.entity.ReqDTO.ReqRegisterDTO;
 import com.example.Web_sale_app.entity.User;
 import com.example.Web_sale_app.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -17,17 +11,14 @@ import java.util.List;
 
 @Service
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    AuthenticationManager authManager;
+    private final SecurityConfig config;
 
-    @Autowired
-    private JWTService jwtService;
-
-    @Autowired
-    private SecurityConfig config;
+    public UserService(UserRepository userRepository, SecurityConfig config) {
+        this.userRepository = userRepository;
+        this.config = config;
+    }
 
     public User register(ReqRegisterDTO req){
         req.setPassword(config.bCryptPasswordEncoder().encode(req.getPassword()));
@@ -42,19 +33,6 @@ public class UserService {
 
     public List<User> findAllUsers(){
         return userRepository.findAll();
-    }
-
-
-    public String verify(ReqLoginDTO reqLoginDTO) {
-
-        Authentication authentication =
-                authManager.authenticate(new UsernamePasswordAuthenticationToken(reqLoginDTO.getUsername(),
-                        reqLoginDTO.getPassword()));
-        System.out.println(reqLoginDTO.getPassword());
-        if(authentication.isAuthenticated())
-            return jwtService.generateToken(reqLoginDTO.getUsername());
-        else
-            return "Fail";
     }
 
 }

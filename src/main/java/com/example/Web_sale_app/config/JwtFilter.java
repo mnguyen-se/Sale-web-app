@@ -2,6 +2,7 @@ package com.example.Web_sale_app.config;
 
 import com.example.Web_sale_app.WebSaleAppApplication;
 import com.example.Web_sale_app.entity.UserDetail;
+import com.example.Web_sale_app.service.BlacklistService;
 import com.example.Web_sale_app.service.JWTService;
 import com.example.Web_sale_app.service.MyUsersDetailService;
 import jakarta.servlet.FilterChain;
@@ -28,6 +29,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     ApplicationContext context;
+
+    @Autowired
+    private BlacklistService blacklistService;
 
 
     @Override

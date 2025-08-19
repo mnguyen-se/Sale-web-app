@@ -24,15 +24,6 @@ public class UserController {
         return userService.register(req);
     }
 
-    @PostMapping("/login")
-    public String login(@RequestBody ReqLoginDTO reqLoginDTO){
-        return userService.verify(reqLoginDTO);
-    }
-
-    public String logout(){
-        return "Logout";
-    }
-
     @GetMapping("/All")
     public List<User> findAllUsers(){
         return userService.findAllUsers();
