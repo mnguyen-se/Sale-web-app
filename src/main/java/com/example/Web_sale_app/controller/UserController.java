@@ -29,6 +29,10 @@ public class UserController {
         return userService.verify(reqLoginDTO);
     }
 
+    public String logout(){
+        return "Logout";
+    }
+
     @GetMapping("/All")
     public List<User> findAllUsers(){
         return userService.findAllUsers();
