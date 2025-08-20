@@ -7,6 +7,7 @@ import com.example.Web_sale_app.entity.*;
 import com.example.Web_sale_app.enums.PaymentMethod;
 import com.example.Web_sale_app.repository.*;
 import com.example.Web_sale_app.service.CheckoutService;
+import com.example.Web_sale_app.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -33,6 +35,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final OrderRepository orderRepo;
     private final OrderItemRepository orderItemRepo;
     private final VoucherRepository voucherRepo;
+    private final EmailService emailService;
 
     // Có thể tái sử dụng RestClient (Spring 6+)
     private final RestClient restClient = RestClient.create();
@@ -129,7 +132,53 @@ public class CheckoutServiceImpl implements CheckoutService {
             qrImageBase64 = generateQrImageBase64(order.getTotalAmount());
         }
 
+// Gửi email thông báo (không chặn luồng nếu gửi thất bại)
+        try {
+            // Lấy email người nhận: ưu tiên email trong request, nếu không có thì dùng từ user
+            String recipient = req.email();
+            if ((recipient == null || recipient.isBlank()) && order.getUser() != null) {
+                try {
+                    recipient = order.getUser().getEmail();
+                } catch (Exception ignored) {}
+            }
 
+            if (recipient != null && !recipient.isBlank()) {
+                String subject = "[Web Sale] Xác nhận đặt hàng #" + order.getId();
+
+                DecimalFormat formatter = new DecimalFormat("#,###");
+
+                StringBuilder body = new StringBuilder();
+                body.append("Xin chào,\n\n")
+                        .append("Đơn hàng của bạn đã được tạo thành công.\n")
+                        .append("Mã đơn: #").append(order.getId()).append("\n")
+                        .append("Trạng thái: ").append(order.getStatus()).append("\n")
+                        .append("Tổng tiền: ").append(formatter.format(order.getTotalAmount())).append(" VND\n\n")
+                        .append("Chi tiết sản phẩm:\n");
+
+                for (CheckoutResponse.OrderLine line : lines) {
+                    String formattedPrice = formatter.format(line.price());
+                    body.append("- ").append(line.productName())
+                            .append(" x").append(line.quantity())
+                            .append(" @ ").append(formattedPrice).append(" VND\n");
+                }
+
+                if (req.paymentMethod() == PaymentMethod.ONLINE) {
+                    long amount = order.getTotalAmount().setScale(0, java.math.RoundingMode.DOWN).longValue();
+                    String qrUrl = "https://img.vietqr.io/image/MB-0984515950-qr_only.png?amount=" + amount;
+                    body.append("\nThanh toán online: Quét mã QR sau để thanh toán:\n")
+                            .append(qrUrl).append("\n");
+                } else {
+                    body.append("\nPhương thức thanh toán: COD (thanh toán khi nhận hàng)\n");
+                }
+
+                body.append("\nCảm ơn bạn đã mua sắm tại Web Sale!");
+
+                emailService.sendMail(recipient, subject, body.toString());
+            }
+        } catch (Exception ignored) {
+            // Ghi log nếu cần, không nên bỏ trống nếu dùng trong thực tế
+            // Logger.warn("Send email failed for order {}", order.getId(), ignored);
+        }
 // 8) Trả về DTO đúng format
         return new CheckoutResponse(
                 order.getId(),
