@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,9 +19,11 @@ import java.util.Map;
 public class AuthController {
     private final BlacklistService blacklistService;
     private final AuthService authService;
-    public AuthController(BlacklistService blacklistService, AuthService authService) {
+    private final UserService userService;
+    public AuthController(BlacklistService blacklistService, AuthService authService, UserService userService) {
         this.blacklistService = blacklistService;
         this.authService = authService;
+        this.userService = userService;
     }
     @PostMapping("/login")
     public String login(@RequestBody ReqLoginDTO reqLoginDTO){
@@ -38,8 +41,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestBody ReqRegisterDTO req){
-        return authService.register(req);
+    public ResponseEntity<?> register(@RequestBody ReqRegisterDTO req){
+        List<User> users = userService.findAllUsers();
+        for (User user : users) {
+            if (user.getUsername().equals(req.getUsername()) || user.getEmail().equals(req.getEmail())) {
+                return ResponseEntity.badRequest().body("Username or email is already taken");
+            }
+        }
+        return ResponseEntity.ok(authService.register(req));
     }
 
     @GetMapping("/confirm")

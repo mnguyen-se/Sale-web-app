@@ -46,6 +46,25 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String verify(ReqLoginDTO reqLoginDTO) {
+        User userAccount = userRepository.findByUsername(reqLoginDTO.getUsername());
+        if(userAccount.isEnabled() == false){
+            // Sinh token xác nhận
+            String token = UUID.randomUUID().toString();
+            ConfirmationToken confirmationToken = new ConfirmationToken();
+            confirmationToken.setToken(token);
+            confirmationToken.setUser(userAccount);
+            confirmationToken.setExpiresAt(LocalDateTime.now().plusMinutes(15)); // hết hạn 15p
+            tokenRepository.save(confirmationToken);
+
+            // Gửi mail xác nhận
+            String link = "http://localhost:8080/api/auth/confirm?token=" + token;
+            emailService.sendMail(
+                    userAccount.getEmail(),
+                    "Xác nhận tài khoản của bạn",
+                    "Nhấn vào link sau để kích hoạt: " + link
+            );
+            return "Your account is not activated yet! Please check your email to activate your account.";
+        }
         Authentication authentication = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         reqLoginDTO.getUsername(),

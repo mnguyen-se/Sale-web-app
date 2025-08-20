@@ -15,7 +15,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendMail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("nguyennmse184571@gmail.com"); // phải trùng với username trong application.properties
+        message.setFrom("nguyennmse184571@fpt.edu.vn"); // phải trùng với username trong application.properties
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
