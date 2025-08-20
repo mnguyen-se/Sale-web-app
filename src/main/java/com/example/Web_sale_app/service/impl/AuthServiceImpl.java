@@ -11,6 +11,7 @@ import com.example.Web_sale_app.service.AuthService;
 import com.example.Web_sale_app.service.EmailService;
 import com.example.Web_sale_app.service.JWTService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -63,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
                     "Xác nhận tài khoản của bạn",
                     "Nhấn vào link sau để kích hoạt: " + link
             );
-            return "Your account is not activated yet! Please check your email to activate your account.";
+            return ("Your account is not activated yet! Please check your email to activate your account.");
         }
         Authentication authentication = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
