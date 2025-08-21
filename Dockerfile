@@ -4,23 +4,26 @@ FROM eclipse-temurin:21-jdk-alpine
 # 2. Thư mục làm việc trong container
 WORKDIR /app
 
-# 3. Copy file pom.xml và build cache dependencies
-COPY pom.xml .
+# 3. Cài bash, copy Maven Wrapper
 RUN apk add --no-cache bash
-RUN mkdir -p target
-RUN echo "dependencies cached"
+COPY mvnw .
+COPY .mvn/ .mvn/
+COPY pom.xml .
 
-# 4. Copy toàn bộ source code
+# 4. Cho mvnw có quyền chạy
+RUN chmod +x ./mvnw
+
+# 5. Copy source code
 COPY src ./src
 
-# 5. Build Spring Boot app
-#RUN ./mvnw clean package -DskipTests
+# 6. Build Spring Boot app
+RUN ./mvnw clean package -DskipTests
 
-# 6. Chỉ copy file jar ra để chạy
+# 7. Copy file jar (tự tìm đúng file)
 RUN cp target/*.jar app.jar
 
-# 7. Port mà Spring Boot chạy
+# 8. Port mà Spring Boot chạy
 EXPOSE 8080
 
-# 8. Command chạy app
+# 9. Command chạy app
 ENTRYPOINT ["java","-jar","app.jar"]
