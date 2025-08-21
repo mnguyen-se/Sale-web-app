@@ -61,7 +61,7 @@ public class AuthServiceImpl implements AuthService {
             tokenRepository.save(confirmationToken);
 
             // Gửi mail xác nhận
-            String link = "http://localhost:8080/api/auth/confirm?token=" + token;
+            String link = "https://sale-web-app.onrender.com/api/auth/confirm?token=" + token;
             emailService.sendMail(
                     userAccount.getEmail(),
                     "Xác nhận tài khoản của bạn",
@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
         tokenRepository.save(confirmationToken);
 
         // Gửi mail xác nhận
-        String link = "http://localhost:8080/api/auth/confirm?token=" + token;
+        String link = "https://sale-web-app.onrender.com/api/auth/confirm?token=" + token;
         emailService.sendMail(
                 user.getEmail(),
                 "Xác nhận tài khoản của bạn",
