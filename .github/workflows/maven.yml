@@ -1,4 +1,4 @@
-name: Web Sale App Project (CI + CD to Railway) | © 2025 by Nguyen
+name: Web Sale App Project (CI + CD to Render) | © 2025 by Nguyen
 
 on:
   push:
@@ -22,17 +22,17 @@ jobs:
       - name: Build with Maven
         run: mvn -B clean package -DskipTests --file pom.xml
 
-      - name: Distribute jar-war file
+      - name: Distribute jar file
         run: mkdir staging && cp target/*.jar staging
 
-      - name: Make hyperlink to jar-war file
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: reports_jar
+          name: springboot_jar
           path: staging
 
   deploy:   # CD job
-    needs: build   # chỉ chạy khi build thành công
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
@@ -44,12 +44,16 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Build JAR for deployment
-        run: mvn -B clean package -DskipTests --file pom.xml
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: springboot_jar
+          path: target
 
-      - name: Deploy to Railway
-        run: |
-          curl -fsSL https://railway.app/install.sh | sh
-          railway up --service ${{ secrets.RAILWAY_SERVICE_NAME }}
+      - name: Deploy to Render
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          curl -X POST https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }} \
+          -H "Accept: application/json" \
+          -H "Authorization: Bearer $RENDER_API_KEY"
