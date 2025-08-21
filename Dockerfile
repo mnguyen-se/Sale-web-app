@@ -14,7 +14,7 @@ RUN echo "dependencies cached"
 COPY src ./src
 
 # 5. Build Spring Boot app
-RUN ./mvnw clean package -DskipTests
+#RUN ./mvnw clean package -DskipTests
 
 # 6. Chỉ copy file jar ra để chạy
 RUN cp target/*.jar app.jar
