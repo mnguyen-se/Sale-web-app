@@ -1,5 +1,6 @@
 package com.example.Web_sale_app.entity;
 
+import com.example.Web_sale_app.enums.Role;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,14 +11,15 @@ import java.util.List;
 
 public class UserDetail implements UserDetails {
 
-    private User user;
+    private final User user;
+
     public UserDetail(User user){
         this.user = user;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority("USER"));
+        return List.of(new SimpleGrantedAuthority(user.getRole()));
     }
 
     @Override
@@ -49,4 +51,10 @@ public class UserDetail implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+    public User getUser() {
+        return user;
+    }
 }
+
+

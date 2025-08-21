@@ -10,10 +10,12 @@ import com.example.Web_sale_app.repository.UserRepository;
 import com.example.Web_sale_app.service.AuthService;
 import com.example.Web_sale_app.service.EmailService;
 import com.example.Web_sale_app.service.JWTService;
+import com.example.Web_sale_app.service.MyUsersDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -33,6 +35,8 @@ public class AuthServiceImpl implements AuthService {
     private final SecurityConfig config;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    @Autowired
+    private MyUsersDetailService myUsersDetailService;
 
     public AuthServiceImpl(ConfirmationTokenRepository tokenRepository,
                            SecurityConfig config,
@@ -54,8 +58,8 @@ public class AuthServiceImpl implements AuthService {
         );
 
         if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(reqLoginDTO.getUsername());
-        } else {
+            UserDetails userDetails = myUsersDetailService.loadUserByUsername(reqLoginDTO.getUsername());
+            return jwtService.generateToken(userDetails);        } else {
             return "Login failed!";
         }
     }
@@ -70,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
         user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
         user.setPassword(encodedPassword);
-        user.setRole("customer");
+        user.setRole("CUSTOMER");
         user.setCreatedAt(OffsetDateTime.now());
         user.setEnabled(false); // mặc định chưa kích hoạt
         userRepository.save(user);

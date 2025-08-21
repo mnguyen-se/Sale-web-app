@@ -82,6 +82,8 @@ public class SecurityConfig {
                         .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/checkout").permitAll()
+                        .requestMatchers("/api/orders/guest/**").permitAll()
+                        .requestMatchers("/api/orders/me/**").authenticated()
                         // Còn lại cần auth
                         .anyRequest().authenticated()
                 )

@@ -148,30 +148,33 @@ public class CheckoutServiceImpl implements CheckoutService {
                 DecimalFormat formatter = new DecimalFormat("#,###");
 
                 StringBuilder body = new StringBuilder();
-                body.append("Xin chào,\n\n")
-                        .append("Đơn hàng của bạn đã được tạo thành công.\n")
-                        .append("Mã đơn: #").append(order.getId()).append("\n")
-                        .append("Trạng thái: ").append(order.getStatus()).append("\n")
-                        .append("Tổng tiền: ").append(formatter.format(order.getTotalAmount())).append(" VND\n\n")
-                        .append("Chi tiết sản phẩm:\n");
+                body.append("Xin chào,<br><br>")
+                        .append("Đơn hàng của bạn đã được tạo thành công.<br>")
+                        .append("Mã đơn: #").append(order.getId()).append("<br>")
+                        .append("Trạng thái: ").append(order.getStatus()).append("<br>")
+                        .append("Tổng tiền: ").append(formatter.format(order.getTotalAmount())).append(" VND<br><br>")
+                        .append("Chi tiết sản phẩm:<br><ul>");
 
                 for (CheckoutResponse.OrderLine line : lines) {
                     String formattedPrice = formatter.format(line.price());
-                    body.append("- ").append(line.productName())
-                            .append(" x").append(line.quantity())
-                            .append(" @ ").append(formattedPrice).append(" VND\n");
+                    body.append("<li>")
+                            .append(line.productName()).append(" x").append(line.quantity())
+                            .append(" @ ").append(formattedPrice).append(" VND")
+                            .append("</li>");
                 }
+                body.append("</ul>");
 
                 if (req.paymentMethod() == PaymentMethod.ONLINE) {
-                    long amount = order.getTotalAmount().setScale(0, java.math.RoundingMode.DOWN).longValue();
+                    long amount = order.getTotalAmount().setScale(0, RoundingMode.DOWN).longValue();
                     String qrUrl = "https://img.vietqr.io/image/MB-0984515950-qr_only.png?amount=" + amount;
-                    body.append("\nThanh toán online: Quét mã QR sau để thanh toán:\n")
-                            .append(qrUrl).append("\n");
+
+                    body.append("<br>Thanh toán online: Quét mã QR sau để thanh toán:<br>")
+                            .append("<img src=\"").append(qrUrl).append("\" alt=\"QR code\" style=\"width:200px;\"/><br>");
                 } else {
-                    body.append("\nPhương thức thanh toán: COD (thanh toán khi nhận hàng)\n");
+                    body.append("<br>Phương thức thanh toán: COD (thanh toán khi nhận hàng)<br>");
                 }
 
-                body.append("\nCảm ơn bạn đã mua sắm tại Web Sale!");
+                body.append("<br>Cảm ơn bạn đã mua sắm tại Web Sale!");
 
                 emailService.sendMail(recipient, subject, body.toString());
             }

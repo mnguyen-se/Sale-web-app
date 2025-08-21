@@ -1,4 +1,5 @@
 package com.example.Web_sale_app.enums;
 
-public class Role {
+public enum Role {
+    CUSTOMER, SELLER, ADMIN
 }

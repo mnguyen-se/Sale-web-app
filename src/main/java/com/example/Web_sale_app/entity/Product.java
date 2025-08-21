@@ -32,6 +32,8 @@ public class Product {
     @Column(name = "manufacturer")
     private String manufacturer;
 
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @ManyToOne
     @JoinColumn(name = "category_id")

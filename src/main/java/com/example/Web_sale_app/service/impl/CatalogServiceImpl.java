@@ -63,9 +63,11 @@ public class CatalogServiceImpl implements CatalogService {
         return products.map(p -> new ProductDTO(
                 p.getId(),
                 p.getName(),
+                p.getImageUrl(),
                 p.getDescription(),
                 p.getPrice(),
                 p.getStock(),
+                p.getManufacturer(),
                 p.getCategory() != null ? p.getCategory().getName() : null
         ));
 
@@ -75,12 +77,95 @@ public class CatalogServiceImpl implements CatalogService {
         return productRepository.findById(id)
                 .map(p -> new ProductDTO(
                         p.getId(),
+                        p.getImageUrl(),
                         p.getName(),
                         p.getDescription(),
                         p.getPrice(),
                         p.getStock(),
+                        p.getManufacturer(),
                         p.getCategory() != null ? p.getCategory().getName() : null
                 ));
     }
 
+    @Override
+    public ProductDTO createProduct(ProductDTO dto, Long sellerId) {
+        Product p = new Product();
+        p.setName(dto.name());
+        p.setImageUrl(dto.imageUrl());
+        p.setManufacturer(dto.manufacturer());
+        p.setDescription(dto.description());
+        p.setPrice(dto.price());
+        p.setStock(dto.stock());
+        p.setImageUrl(dto.imageUrl());
+
+        if (dto.categoryName() != null) {
+            categoryRepository.findByNameIgnoreCase(dto.categoryName())
+                    .ifPresent(p::setCategory);
+        }
+
+        if (sellerId != null) {
+            com.example.Web_sale_app.entity.User seller = new com.example.Web_sale_app.entity.User();
+            seller.setId(sellerId);
+            p.setSeller(seller);
+        }
+
+        Product saved = productRepository.save(p);
+        return mapToDTO(saved);
+    }
+
+    @Override
+    public ProductDTO updateProduct(Long id, ProductDTO dto, Long sellerId) {
+        Product p = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại"));
+
+        // Optional: kiểm tra quyền sở hữu nếu cần (sellerId)
+        if (sellerId != null && !p.getSeller().getId().equals(sellerId)) {
+            throw new SecurityException("Không có quyền sửa sản phẩm này");
+        }
+
+        p.setName(dto.name());
+        p.setDescription(dto.description());
+        p.setPrice(dto.price());
+        p.setStock(dto.stock());
+        p.setImageUrl(dto.imageUrl());
+
+        if (dto.categoryName() != null) {
+            categoryRepository.findByNameIgnoreCase(dto.categoryName())
+                    .ifPresent(p::setCategory);
+        }
+
+        return mapToDTO(productRepository.save(p));
+    }
+
+    @Override
+    public void deleteProduct(Long id, Long sellerId) {
+        Product p = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại"));
+
+        if (sellerId != null && !p.getSeller().getId().equals(sellerId)) {
+            throw new SecurityException("Không có quyền xóa sản phẩm này");
+        }
+
+        productRepository.delete(p);
+    }
+
+    @Override
+    public Optional<ProductDTO> getProductByIdForEdit(Long id, Long sellerId) {
+        return productRepository.findById(id)
+                .filter(p -> sellerId == null || p.getSeller().getId().equals(sellerId))
+                .map(this::mapToDTO);
+    }
+
+    private ProductDTO mapToDTO(Product p) {
+        return new ProductDTO(
+                p.getId(),
+                p.getImageUrl(),
+                p.getName(),
+                p.getDescription(),
+                p.getPrice(),
+                p.getStock(),
+                p.getManufacturer(),
+                p.getCategory() != null ? p.getCategory().getName() : null
+        );
+    }
 }

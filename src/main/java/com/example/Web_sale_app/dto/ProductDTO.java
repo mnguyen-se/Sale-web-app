@@ -5,8 +5,10 @@ import java.math.BigDecimal;
 public record ProductDTO(
         Long id,
         String name,
+        String imageUrl,
         String description,
         BigDecimal price,
         Integer stock,
-        String categoryName
+        String categoryName,
+        String manufacturer
 ) {}

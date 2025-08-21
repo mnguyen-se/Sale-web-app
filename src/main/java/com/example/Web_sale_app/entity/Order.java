@@ -38,5 +38,10 @@ public class Order {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
+    @Column(name = "recipient_email")
+    private String recipientEmail;
+
+    @Column(name = "recipient_phone")
+    private String recipientPhone;
     // getters & setters
 }

@@ -15,4 +15,8 @@ public interface CatalogService {
     List<Category> listCategories();
     Page<ProductDTO> listProducts(Long categoryId, String q, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
     Optional<ProductDTO> getProductDetailDTO(Long id);
+    ProductDTO createProduct(ProductDTO dto, Long sellerId);
+    ProductDTO updateProduct(Long id, ProductDTO dto, Long sellerId);
+    void deleteProduct(Long id, Long sellerId);
+    Optional<ProductDTO> getProductByIdForEdit(Long id, Long sellerId);
 }

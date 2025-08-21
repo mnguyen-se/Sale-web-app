@@ -39,4 +39,5 @@ public class CheckoutController {
         byte[] png = restClient.get().uri(url).retrieve().body(byte[].class);
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(png);
     }
+
 }
