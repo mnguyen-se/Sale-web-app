@@ -2,9 +2,6 @@ package com.example.Web_sale_app.service.impl;
 
 import com.example.Web_sale_app.dto.ProductDTO;
 import com.example.Web_sale_app.entity.Product;
-import com.example.Web_sale_app.exception.ResourceNotFoundException;
-import com.example.Web_sale_app.exception.ValidationException;
-import com.example.Web_sale_app.exception.ForbiddenException;
 import com.example.Web_sale_app.repository.CategoryRepository;
 import com.example.Web_sale_app.repository.ProductRepository;
 import com.example.Web_sale_app.service.CatalogService;
@@ -165,11 +162,11 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public ProductDTO updateProduct(Long id, ProductDTO dto, Long sellerId) {
         Product p = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
 
         // Optional: kiểm tra quyền sở hữu nếu cần (sellerId)
         if (sellerId != null && !p.getSeller().getId().equals(sellerId)) {
-            throw new ForbiddenException("Không có quyền sửa sản phẩm này");
+            throw new SecurityException("Không có quyền sửa sản phẩm này");
         }
 
         p.setName(dto.name());
@@ -189,10 +186,10 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public void deleteProduct(Long id, Long sellerId) {
         Product p = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
 
         if (sellerId != null && !p.getSeller().getId().equals(sellerId)) {
-            throw new ForbiddenException("Không có quyền xóa sản phẩm này");
+            throw new SecurityException("Không có quyền xóa sản phẩm này");
         }
 
         productRepository.delete(p);
@@ -221,10 +218,10 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public void hideProduct(Long id, Long sellerId) {
         Product p = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
 
         if (sellerId != null && !p.getSeller().getId().equals(sellerId)) {
-            throw new ForbiddenException("Không có quyền ẩn sản phẩm này");
+            throw new SecurityException("Không có quyền ẩn sản phẩm này");
         }
 
         p.setActive(false);
@@ -234,10 +231,10 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public void unhideProduct(Long id, Long sellerId) {
         Product p = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
 
         if (sellerId != null && !p.getSeller().getId().equals(sellerId)) {
-            throw new ForbiddenException("Không có quyền hiển thị lại sản phẩm này");
+            throw new SecurityException("Không có quyền hiển thị lại sản phẩm này");
         }
 
         p.setActive(true);
@@ -283,7 +280,7 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public ProductDTO updateProductAsAdmin(Long id, ProductDTO dto) {
         Product p = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
 
         p.setName(dto.name());
         p.setDescription(dto.description());
@@ -303,14 +300,14 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public void deleteProductAsAdmin(Long id) {
         Product p = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         productRepository.delete(p);
     }
 
     @Override
     public void toggleProductActiveStatus(Long id) {
         Product p = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         p.setActive(!p.isActive());
         productRepository.save(p);
     }
@@ -325,7 +322,7 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public com.example.Web_sale_app.entity.Category updateCategory(Long id, com.example.Web_sale_app.entity.Category category) {
         com.example.Web_sale_app.entity.Category existingCategory = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", id));
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
         
         existingCategory.setName(category.getName());
         existingCategory.setDescription(category.getDescription());
