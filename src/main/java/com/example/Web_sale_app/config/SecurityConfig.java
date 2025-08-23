@@ -70,7 +70,7 @@ public class SecurityConfig {
 
                         // Public catalog & cart
                         .requestMatchers("/api/catalog/**").permitAll()
-                        .requestMatchers("/api/cart/**").permitAll()  // đã đủ, không cần lặp lại POST /add
+                        .requestMatchers("/api/cart/**").permitAll()
 
                         // Preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -83,11 +83,13 @@ public class SecurityConfig {
                         // OAuth2 endpoints
                         .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
 
+                        //Chatbot
+                        .requestMatchers("/api/chatbot/chat").permitAll()
+
                         .requestMatchers(HttpMethod.POST, "/api/checkout").permitAll()
                         .requestMatchers("/api/orders/guest/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/orders/me/**").authenticated()
-
                         // Còn lại cần auth
                         .anyRequest().authenticated()
                 )
