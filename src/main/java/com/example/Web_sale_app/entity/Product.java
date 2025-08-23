@@ -49,5 +49,8 @@ public class Product {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
     // getters & setters
 }

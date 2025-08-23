@@ -4,34 +4,23 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Function;
 
 @Service
 public class JWTService {
 
-    private String secretKey = "";
+    @Value("${app.jwt.secret}")
+    private String secretKey;
 
-    // Tạo secretKey chỉ một lần khi service khởi tạo
-    @PostConstruct
-    public void init() {
-        try {
-            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey sK = keyGen.generateKey();
-            secretKey = Base64.getEncoder().encodeToString(sK.getEncoded());
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    @Value("${app.jwt.expiration-ms}")
+    private long jwtExpirationMs;
 
     // ===== TẠO TOKEN CÓ ROLE =====
     public String generateToken(UserDetails userDetails) {
@@ -56,7 +45,7 @@ public class JWTService {
                 .add(claims)
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24 giờ
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs)) // Sử dụng config từ properties
                 .and()
                 .signWith(getKey())
                 .compact();

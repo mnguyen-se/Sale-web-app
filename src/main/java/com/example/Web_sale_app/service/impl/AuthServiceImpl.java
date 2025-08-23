@@ -62,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
             tokenRepository.save(confirmationToken);
 
             // Gửi mail xác nhận
-            String link = "https://sale-web-app.onrender.com/api/auth/confirm?token=" + token;
+            String link = "http://localhost:8080/api/auth/confirm?token=" + token;
             emailService.sendMail(
                     userAccount.getEmail(),
                     "Xác nhận tài khoản của bạn",
@@ -79,7 +79,8 @@ public class AuthServiceImpl implements AuthService {
 
         if (authentication.isAuthenticated()) {
             UserDetails userDetails = myUsersDetailService.loadUserByUsername(reqLoginDTO.getUsername());
-            return jwtService.generateToken(userDetails);        } else {
+            return jwtService.generateToken(userDetails);
+        } else {
             return "Login failed!";
         }
     }

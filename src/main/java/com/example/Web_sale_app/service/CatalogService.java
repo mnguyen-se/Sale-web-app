@@ -19,4 +19,22 @@ public interface CatalogService {
     ProductDTO updateProduct(Long id, ProductDTO dto, Long sellerId);
     void deleteProduct(Long id, Long sellerId);
     Optional<ProductDTO> getProductByIdForEdit(Long id, Long sellerId);
+    void hideProduct(Long id, Long sellerId);
+    void unhideProduct(Long id, Long sellerId);
+    List<ProductDTO> listAllActiveProducts();
+
+    // Admin CRUD methods
+    Page<ProductDTO> listAllProductsForAdmin(Pageable pageable);
+    ProductDTO createProductAsAdmin(ProductDTO dto);
+    ProductDTO updateProductAsAdmin(Long id, ProductDTO dto);
+    void deleteProductAsAdmin(Long id);
+    void toggleProductActiveStatus(Long id);
+    
+    // Category CRUD for Admin
+    Category createCategory(Category category);
+    Category updateCategory(Long id, Category category);
+    void deleteCategory(Long id);
+    Optional<Category> getCategoryById(Long id);
+    Page<ProductDTO> listProductsForBuyer(Long categoryId, String q, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+
 }

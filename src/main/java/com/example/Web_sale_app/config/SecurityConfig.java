@@ -85,7 +85,9 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/api/checkout").permitAll()
                         .requestMatchers("/api/orders/guest/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/orders/me/**").authenticated()
+
                         // Còn lại cần auth
                         .anyRequest().authenticated()
                 )

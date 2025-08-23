@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,25 +19,26 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/admin/products")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminProductController {
 
     private final CatalogService catalogService;
 
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(@RequestBody ProductDTO dto) {
-        ProductDTO created = catalogService.createProduct(dto, null); // admin không cần sellerId
+        ProductDTO created = catalogService.createProductAsAdmin(dto); // Sử dụng method admin
         return ResponseEntity.ok(created);
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping("/update/{id}")
     public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id, @RequestBody ProductDTO dto) {
-        ProductDTO updated = catalogService.updateProduct(id, dto, null);
+        ProductDTO updated = catalogService.updateProductAsAdmin(id, dto); // Sử dụng method admin
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        catalogService.deleteProduct(id, null);
+        catalogService.deleteProductAsAdmin(id); // Sử dụng method admin
         return ResponseEntity.noContent().build();
     }
 
@@ -54,7 +56,35 @@ public class AdminProductController {
         String sortField = switch (sort) { case "name" -> "name"; case "price" -> "price"; default -> "createdAt"; };
         Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), Sort.by(direction, sortField));
+        
+        // Admin có thể lấy tất cả sản phẩm hoặc filter
+        if (categoryId == null && search == null && minPrice == null && maxPrice == null) {
+            return catalogService.listAllProductsForAdmin(pageable);
+        }
         return catalogService.listProducts(categoryId, search, minPrice, maxPrice, pageable);
+    }
+
+    @PatchMapping("/toggle-active/{id}")
+    public ResponseEntity<Void> toggleProductActiveStatus(@PathVariable Long id) {
+        catalogService.toggleProductActiveStatus(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/hidden/{id}")
+    public ResponseEntity<Void> hiddenProduct(@PathVariable Long id) {
+        catalogService.hideProduct(id, null);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/unhidden/{id}")
+    public ResponseEntity<Void> unhiddenProduct(@PathVariable Long id) {
+        catalogService.unhideProduct(id, null);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<java.util.List<ProductDTO>> listAllActiveProducts() {
+        return ResponseEntity.ok(catalogService.listAllActiveProducts());
     }
 
    
