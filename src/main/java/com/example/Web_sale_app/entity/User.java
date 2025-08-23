@@ -1,5 +1,6 @@
 package com.example.Web_sale_app.entity;
 
+import com.example.Web_sale_app.enums.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -34,7 +35,7 @@ public class User {
     private boolean enabled = false;
 
     @Column(nullable = false)
-    private String role; // customer, seller, admin
+    private Role role; // customer, seller, admin
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt;

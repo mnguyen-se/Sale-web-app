@@ -5,6 +5,7 @@ import com.example.Web_sale_app.entity.ConfirmationToken;
 import com.example.Web_sale_app.entity.ReqDTO.ReqLoginDTO;
 import com.example.Web_sale_app.entity.ReqDTO.ReqRegisterDTO;
 import com.example.Web_sale_app.entity.User;
+import com.example.Web_sale_app.enums.Role;
 import com.example.Web_sale_app.repository.ConfirmationTokenRepository;
 import com.example.Web_sale_app.repository.UserRepository;
 import com.example.Web_sale_app.service.AuthService;
@@ -93,7 +94,7 @@ public class AuthServiceImpl implements AuthService {
         user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
         user.setPassword(encodedPassword);
-        user.setRole("CUSTOMER");
+        user.setRole(Role.CUSTOMER);
         user.setCreatedAt(OffsetDateTime.now());
         user.setEnabled(false); // mặc định chưa kích hoạt
         userRepository.save(user);

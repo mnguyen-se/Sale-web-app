@@ -1,6 +1,7 @@
 package com.example.Web_sale_app.service.impl;
 
 import com.example.Web_sale_app.entity.User;
+import com.example.Web_sale_app.enums.Role;
 import com.example.Web_sale_app.repository.UserRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -30,7 +31,7 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
             User user = new User();
             user.setEmail(email);
             user.setName(name);
-            user.setRole("customer");
+            user.setRole(Role.CUSTOMER);
             return userRepository.save(user);
         });
 
