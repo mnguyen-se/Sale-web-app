@@ -7,5 +7,6 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByProduct_Id(Long productId);
     List<Review> findByUser_Id(Long userId);
-    boolean existsByUser_IdAndProduct_Id(Long userId, Long productId); // 1 user 1 review/sản phẩm (nếu muốn)
+    void deleteByProduct_IdAndUser_Id(Long productId, Long userId);
+    boolean existsByUser_IdAndProduct_Id(Long userId, Long productId);// 1 user 1 review/sản phẩm (nếu muốn)
 }
