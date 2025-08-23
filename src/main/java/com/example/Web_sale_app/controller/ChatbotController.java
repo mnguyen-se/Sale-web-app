@@ -20,11 +20,15 @@ import java.util.Map;
 public class ChatbotController {
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${OPENAI_API_KEY}")
+    @Value("${OPENAI_API_KEY:}")
     private String openaiApiKey;
 
     @PostMapping
     public ResponseEntity<String> chat(@RequestBody Map<String, String> request) {
+        if (openaiApiKey == null || openaiApiKey.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("OpenAI API key is not configured. Please set OPENAI_API_KEY in application.properties");
+        }
+        
         String userMessage = request.get("message");
 
         String url = "https://api.openai.com/v1/chat/completions";
