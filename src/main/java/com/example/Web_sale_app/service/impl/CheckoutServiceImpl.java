@@ -4,6 +4,7 @@ package com.example.Web_sale_app.service.impl;
 import com.example.Web_sale_app.dto.CheckoutRequest;
 import com.example.Web_sale_app.dto.CheckoutResponse;
 import com.example.Web_sale_app.entity.*;
+import com.example.Web_sale_app.enums.OrderStatus;
 import com.example.Web_sale_app.enums.PaymentMethod;
 import com.example.Web_sale_app.repository.*;
 import com.example.Web_sale_app.service.CheckoutService;
@@ -100,10 +101,10 @@ public class CheckoutServiceImpl implements CheckoutService {
             order.setUser(u);
         }
         order.setTotalAmount(total);
-        order.setStatus("PENDING");
+        order.setStatus(OrderStatus.PENDING);  // ✅ ĐÚNG - sử dụng enum
         order.setCreatedAt(OffsetDateTime.now());
+        order.setPaymentMethod(req.paymentMethod()); // Thêm payment method
         if (appliedVoucher != null) {
-            // nhớ thêm field & mapping voucher trong Order nếu muốn lưu
             order.setVoucher(appliedVoucher);
         }
         order = orderRepo.save(order);
@@ -186,8 +187,8 @@ public class CheckoutServiceImpl implements CheckoutService {
         return new CheckoutResponse(
                 order.getId(),
                 total,
-                order.getStatus(),
-                lines,          // List<OrderLine> đã tạo ở trên
+                order.getStatus(),  // ✅ ĐÚNG - truyền OrderStatus enum
+                lines,
                 qrImageBase64
         );
     }

@@ -16,6 +16,7 @@ You are working on Spring Boot Sale Web App project.
 
 **RESPONSE FORMAT REQUIRED:**
 - Only Vietnamese
+- Do not use icon
 - Analysis section
 - Implementation with filepath comments  
 - Compliance verification checklist

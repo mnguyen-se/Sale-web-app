@@ -5,9 +5,11 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import com.example.Web_sale_app.enums.OrderStatus;
+
 public record OrderDetailDTO(
         Long id,
-        String status,
+        OrderStatus status,
         BigDecimal totalAmount,
         OffsetDateTime createdAt,
         String recipientEmail,

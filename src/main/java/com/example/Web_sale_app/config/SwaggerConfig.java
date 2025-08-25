@@ -17,7 +17,7 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("My API")
+                        .title("Web sale app backend API")
                         .version("1.0")
                         .description("API Documentation with JWT Auth"))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
@@ -41,6 +41,13 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("all")
                 .pathsToMatch("/api/**")         // <-- có cả /api/admin/**
+                .build();
+    }
+    @Bean
+    public GroupedOpenApi sellerApi() {
+        return GroupedOpenApi.builder()
+                .group("seller")
+                .pathsToMatch("/api/seller/**")
                 .build();
     }
 }

@@ -4,6 +4,7 @@ package com.example.Web_sale_app.service.impl;
 import com.example.Web_sale_app.dto.*;
 import com.example.Web_sale_app.entity.Order;
 import com.example.Web_sale_app.entity.OrderItem;
+import com.example.Web_sale_app.enums.OrderStatus;  // ✅ Thêm import này
 import com.example.Web_sale_app.repository.OrderItemRepository;
 import com.example.Web_sale_app.repository.OrderRepository;
 import com.example.Web_sale_app.service.OrderService;
@@ -25,13 +26,25 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Page<OrderSummaryDTO> listMyOrders(Long userId, int page, int size, String status) {
         Pageable pageable = PageRequest.of(Math.max(page,0), Math.min(Math.max(size,1), 100));
-        Page<Order> pageData = (status == null || status.isBlank())
-                ? orderRepo.findByUser_IdOrderByCreatedAtDesc(userId, pageable)
-                : orderRepo.findByUser_IdAndStatusOrderByCreatedAtDesc(userId, status, pageable);
+        
+        Page<Order> pageData;
+        if (status == null || status.isBlank()) {
+            pageData = orderRepo.findByUser_IdOrderByCreatedAtDesc(userId, pageable);
+        } else {
+            // ✅ Convert String thành OrderStatus enum
+            try {
+                OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
+                pageData = orderRepo.findByUser_IdAndStatusOrderByCreatedAtDesc(userId, orderStatus, pageable);
+            } catch (IllegalArgumentException e) {
+                // Nếu status không hợp lệ, throw exception hoặc return empty page
+                throw new IllegalArgumentException("Invalid order status: " + status + 
+                    ". Valid values are: PENDING, PAID, PROCESSING, SHIPPED, COMPLETED, CANCELLED");
+            }
+        }
 
         return pageData.map(o -> new OrderSummaryDTO(
                 o.getId(),
-                o.getStatus(),
+                o.getStatus(),  // ✅ Trả về OrderStatus enum
                 o.getTotalAmount(),
                 o.getCreatedAt()
         ));
@@ -55,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
 
         return new OrderDetailDTO(
                 o.getId(),
-                o.getStatus(),
+                o.getStatus(),  // ✅ Trả về OrderStatus enum
                 o.getTotalAmount(),
                 o.getCreatedAt(),
                 o.getRecipientEmail(),
@@ -89,7 +102,7 @@ public class OrderServiceImpl implements OrderService {
 
         return new OrderDetailDTO(
                 o.getId(),
-                o.getStatus(),
+                o.getStatus(),  // ✅ Trả về OrderStatus enum
                 o.getTotalAmount(),
                 o.getCreatedAt(),
                 o.getRecipientEmail(),
