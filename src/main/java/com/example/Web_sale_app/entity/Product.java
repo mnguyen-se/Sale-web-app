@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
+import com.example.Web_sale_app.enums.ProductStatus;
+
 @Entity
 @Table(name = "products")
 @AllArgsConstructor
@@ -52,5 +54,8 @@ public class Product {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "product_status", nullable = false)
+    private ProductStatus status = ProductStatus.DRAFT;
     // getters & setters
 }
