@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-import com.example.Web_sale_app.enums.ProductStatus;
-
 @Entity
 @Table(name = "products")
 @AllArgsConstructor

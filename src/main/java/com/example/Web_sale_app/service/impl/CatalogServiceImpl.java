@@ -2,7 +2,6 @@ package com.example.Web_sale_app.service.impl;
 
 import com.example.Web_sale_app.dto.ProductDTO;
 import com.example.Web_sale_app.entity.Product;
-import com.example.Web_sale_app.enums.ProductStatus;
 import com.example.Web_sale_app.repository.CategoryRepository;
 import com.example.Web_sale_app.repository.ProductRepository;
 import com.example.Web_sale_app.service.CatalogService;
