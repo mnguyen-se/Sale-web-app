@@ -3,6 +3,7 @@ package com.example.Web_sale_app.service;
 import com.example.Web_sale_app.dto.ProductDTO;
 import com.example.Web_sale_app.entity.Category;
 
+import com.example.Web_sale_app.enums.ProductStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

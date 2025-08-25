@@ -1,5 +1,6 @@
 package com.example.Web_sale_app.entity;
 
+import com.example.Web_sale_app.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
