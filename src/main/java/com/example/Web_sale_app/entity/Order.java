@@ -25,6 +25,7 @@ public class Order {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private String status; // pending, paid, shipped...
 
@@ -43,5 +44,9 @@ public class Order {
 
     @Column(name = "recipient_phone")
     private String recipientPhone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method")
+    private String PaymentMethod;
     // getters & setters
 }
