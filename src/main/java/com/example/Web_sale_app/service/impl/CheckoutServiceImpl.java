@@ -1,8 +1,8 @@
 // com.example.Web_sale_app.service.impl.CheckoutServiceImpl
 package com.example.Web_sale_app.service.impl;
 
-import com.example.Web_sale_app.dto.CheckoutRequest;
-import com.example.Web_sale_app.dto.CheckoutResponse;
+import com.example.Web_sale_app.dto.Req.CheckoutRequest;
+import com.example.Web_sale_app.dto.Res.CheckoutResponse;
 import com.example.Web_sale_app.entity.*;
 import com.example.Web_sale_app.enums.OrderStatus;
 import com.example.Web_sale_app.enums.PaymentMethod;

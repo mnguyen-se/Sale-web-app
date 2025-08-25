@@ -1,7 +1,7 @@
 package com.example.Web_sale_app.controller;
 
-import com.example.Web_sale_app.dto.CheckoutRequest;
-import com.example.Web_sale_app.dto.CheckoutResponse;
+import com.example.Web_sale_app.dto.Req.CheckoutRequest;
+import com.example.Web_sale_app.dto.Res.CheckoutResponse;
 import com.example.Web_sale_app.service.CheckoutService;
 import com.example.Web_sale_app.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;

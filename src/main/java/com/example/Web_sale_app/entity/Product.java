@@ -57,5 +57,16 @@ public class Product {
     @Enumerated(EnumType.STRING)
     @Column(name = "product_status", nullable = false)
     private ProductStatus status = ProductStatus.DRAFT;
+
+    @Column(name = "low_stock_threshold")
+    private Integer lowStockThreshold;
+
     // getters & setters
+    public Integer getLowStockThreshold() {
+        return lowStockThreshold;
+    }
+
+    public void setLowStockThreshold(Integer lowStockThreshold) {
+        this.lowStockThreshold = lowStockThreshold;
+    }
 }

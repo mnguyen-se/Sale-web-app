@@ -1,7 +1,7 @@
 package com.example.Web_sale_app.service;
 
-import com.example.Web_sale_app.dto.CheckoutRequest;
-import com.example.Web_sale_app.dto.CheckoutResponse;
+import com.example.Web_sale_app.dto.Req.CheckoutRequest;
+import com.example.Web_sale_app.dto.Res.CheckoutResponse;
 
 import java.math.BigDecimal;
 

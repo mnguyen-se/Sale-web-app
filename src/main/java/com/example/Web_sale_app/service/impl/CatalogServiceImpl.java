@@ -1,6 +1,9 @@
 package com.example.Web_sale_app.service.impl;
 
 import com.example.Web_sale_app.dto.ProductDTO;
+import com.example.Web_sale_app.dto.StockImportResult;
+import com.example.Web_sale_app.dto.StockReport;
+import com.example.Web_sale_app.dto.Req.StockUpdateRequest;
 import com.example.Web_sale_app.entity.Product;
 import com.example.Web_sale_app.enums.ProductStatus;
 import com.example.Web_sale_app.repository.CategoryRepository;
@@ -506,6 +509,259 @@ public class CatalogServiceImpl implements CatalogService {
                 String.format("Không thể chuyển từ trạng thái %s sang %s", from.getDisplayName(), to.getDisplayName())
             );
         }
+    }
+
+    // ===== UC12 - STOCK MANAGEMENT =====
+    
+    /**
+     * UC12 - Cập nhật tồn kho đơn lẻ
+     */
+    @Override
+    public ProductDTO updateProductStock(Long id, Integer newStock, Long sellerId) {
+        Product p = findProductWithSellerCheck(id, sellerId);
+        
+        // Kiểm tra có đơn hàng đang xử lý không
+        if (hasActiveOrders(id)) {
+            throw new IllegalStateException("Không thể cập nhật tồn kho khi có đơn hàng đang xử lý");
+        }
+        
+        validateStockQuantity(newStock);
+        
+        Integer oldStock = p.getStock();
+        p.setStock(newStock);
+        
+        // Ghi log thay đổi tồn kho
+        logStockChange(id, sellerId, oldStock, newStock, "MANUAL_UPDATE");
+        
+        // Kiểm tra và kích hoạt cảnh báo tồn thấp
+        checkLowStockAlert(p, sellerId);
+        
+        Product saved = productRepository.save(p);
+        return mapToDTO(saved);
+    }
+    
+    /**
+     * UC12 - Cập nhật tồn kho hàng loạt
+     */
+    @Override
+    public List<ProductDTO> updateBatchStock(List<StockUpdateRequest> stockUpdates, Long sellerId) {
+        List<ProductDTO> updatedProducts = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        
+        for (StockUpdateRequest request : stockUpdates) {
+            try {
+                // Kiểm tra sản phẩm tồn tại và quyền
+                Product p = findProductWithSellerCheck(request.productId(), sellerId);
+                
+                // Kiểm tra có đơn hàng đang xử lý
+                if (hasActiveOrders(request.productId())) {
+                    errors.add("Sản phẩm ID " + request.productId() + " có đơn hàng đang xử lý");
+                    continue;
+                }
+                
+                validateStockQuantity(request.newStock());
+                
+                Integer oldStock = p.getStock();
+                p.setStock(request.newStock());
+                
+                // Ghi log
+                logStockChange(request.productId(), sellerId, oldStock, request.newStock(), "BATCH_UPDATE");
+                
+                // Kiểm tra cảnh báo
+                checkLowStockAlert(p, sellerId);
+                
+                Product saved = productRepository.save(p);
+                updatedProducts.add(mapToDTO(saved));
+                
+            } catch (Exception e) {
+                errors.add("Sản phẩm ID " + request.productId() + ": " + e.getMessage());
+            }
+        }
+        
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException("Lỗi cập nhật hàng loạt: " + String.join("; ", errors));
+        }
+        
+        return updatedProducts;
+    }
+    
+    /**
+     * UC12 - Import tồn kho từ CSV
+     */
+    @Override
+    public StockImportResult importStockFromCsv(String csvContent, Long sellerId) {
+        List<String> errors = new ArrayList<>();
+        List<ProductDTO> successProducts = new ArrayList<>();
+        int totalRows = 0;
+        
+        try {
+            String[] lines = csvContent.split("\n");
+            
+            // Skip header row
+            for (int i = 1; i < lines.length; i++) {
+                totalRows++;
+                String line = lines[i].trim();
+                if (line.isEmpty()) continue;
+                
+                try {
+                    String[] columns = line.split(",");
+                    if (columns.length < 2) {
+                        errors.add("Dòng " + (i + 1) + ": Thiếu dữ liệu");
+                        continue;
+                    }
+                    
+                    Long productId = Long.parseLong(columns[0].trim());
+                    Integer newStock = Integer.parseInt(columns[1].trim());
+                    
+                    // Validate and update
+                    ProductDTO updated = updateProductStock(productId, newStock, sellerId);
+                    successProducts.add(updated);
+                    
+                } catch (NumberFormatException e) {
+                    errors.add("Dòng " + (i + 1) + ": Định dạng số không hợp lệ");
+                } catch (Exception e) {
+                    errors.add("Dòng " + (i + 1) + ": " + e.getMessage());
+                }
+            }
+            
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Lỗi xử lý file CSV: " + e.getMessage());
+        }
+        
+        return new StockImportResult(
+            totalRows,
+            successProducts.size(),
+            errors.size(),
+            successProducts,
+            errors
+        );
+    }
+    
+    /**
+     * UC12 - Cấu hình cảnh báo tồn kho thấp
+     */
+    @Override
+    public void configureLowStockAlert(Long productId, Integer threshold, Long sellerId) {
+        Product p = findProductWithSellerCheck(productId, sellerId);
+        
+        if (threshold == null || threshold < 0) {
+            throw new IllegalArgumentException("Ngưỡng cảnh báo phải >= 0");
+        }
+        
+        // Lưu cấu hình cảnh báo (có thể lưu trong Product entity hoặc bảng riêng)
+        p.setLowStockThreshold(threshold);
+        productRepository.save(p);
+        
+        // Kiểm tra ngay lập tức
+        if (p.getStock() <= threshold) {
+            triggerLowStockAlert(p, sellerId);
+        }
+    }
+    
+    /**
+     * UC12 - Lấy danh sách sản phẩm tồn kho thấp
+     */
+    @Override
+    public Page<ProductDTO> getLowStockProducts(Long sellerId, Pageable pageable) {
+        Specification<Product> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("seller").get("id"), sellerId));
+            
+            // So sánh stock <= lowStockThreshold
+            predicates.add(cb.lessThanOrEqualTo(root.get("stock"), root.get("lowStockThreshold")));
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        
+        Page<Product> products = productRepository.findAll(spec, pageable);
+        return products.map(this::mapToDTO);
+    }
+    
+    /**
+     * UC12 - Lấy báo cáo tồn kho
+     */
+    @Override
+    public StockReport getStockReport(Long sellerId) {
+        List<Product> products = productRepository.findBySeller_Id(sellerId);
+        
+        int totalProducts = products.size();
+        int inStockProducts = (int) products.stream().filter(p -> p.getStock() > 0).count();
+        int outOfStockProducts = totalProducts - inStockProducts;
+        int lowStockProducts = (int) products.stream()
+                .filter(p -> p.getStock() <= (p.getLowStockThreshold() != null ? p.getLowStockThreshold() : 0))
+                .count();
+        
+        BigDecimal totalStockValue = products.stream()
+                .map(p -> p.getPrice().multiply(BigDecimal.valueOf(p.getStock())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        return new StockReport(
+            totalProducts,
+            inStockProducts,
+            outOfStockProducts,
+            lowStockProducts,
+            totalStockValue
+        );
+    }
+    
+    // ===== HELPER METHODS FOR UC12 =====
+    
+    /**
+     * Kiểm tra có đơn hàng đang xử lý cho sản phẩm này không
+     */
+    private boolean hasActiveOrders(Long productId) {
+        // Logic kiểm tra OrderItem có status PENDING/PROCESSING
+        // Cần inject OrderItemRepository để check
+        return false; // Placeholder - implement based on your OrderItem repository
+    }
+    
+    /**
+     * Validate số lượng tồn kho
+     */
+    private void validateStockQuantity(Integer stock) {
+        if (stock == null || stock < 0) {
+            throw new IllegalArgumentException("Số lượng tồn kho phải >= 0");
+        }
+        if (stock > 999999) {
+            throw new IllegalArgumentException("Số lượng tồn kho không được vượt quá 999,999");
+        }
+    }
+    
+    /**
+     * Ghi log thay đổi tồn kho
+     */
+    private void logStockChange(Long productId, Long sellerId, Integer oldStock, Integer newStock, String changeType) {
+        // Log stock change - có thể lưu vào database hoặc file log
+        System.out.println(String.format(
+            "STOCK_CHANGE: Product %d, Seller %d, %d -> %d (%s)",
+            productId, sellerId, oldStock, newStock, changeType
+        ));
+    }
+    
+    /**
+     * Kiểm tra và kích hoạt cảnh báo tồn thấp
+     */
+    private void checkLowStockAlert(Product product, Long sellerId) {
+        Integer threshold = product.getLowStockThreshold();
+        if (threshold != null && product.getStock() <= threshold) {
+            triggerLowStockAlert(product, sellerId);
+        }
+    }
+    
+    /**
+     * Kích hoạt cảnh báo tồn kho thấp
+     */
+    private void triggerLowStockAlert(Product product, Long sellerId) {
+        // Gửi email, notification, etc.
+        System.out.println(String.format(
+            "LOW_STOCK_ALERT: Product '%s' (ID: %d) has low stock: %d (threshold: %d)",
+            product.getName(), product.getId(), product.getStock(), product.getLowStockThreshold()
+        ));
+        
+        // TODO: Implement actual alert mechanism
+        // - Send email to seller
+        // - Create in-app notification
+        // - Log to alert table
     }
 
 }

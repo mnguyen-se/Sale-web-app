@@ -1,9 +1,9 @@
 package com.example.Web_sale_app.service.impl;
 
-import com.example.Web_sale_app.dto.ApplyVoucherRequest;
-import com.example.Web_sale_app.dto.ApplyVoucherResponse;
 import com.example.Web_sale_app.dto.CartSummaryDTO;
-import com.example.Web_sale_app.dto.UpdateCartItemRequest;
+import com.example.Web_sale_app.dto.Req.ApplyVoucherRequest;
+import com.example.Web_sale_app.dto.Req.UpdateCartItemRequest;
+import com.example.Web_sale_app.dto.Res.ApplyVoucherResponse;
 import com.example.Web_sale_app.entity.CartItem;
 import com.example.Web_sale_app.entity.Product;
 import com.example.Web_sale_app.repository.CartItemRepository;

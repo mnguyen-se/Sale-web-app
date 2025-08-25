@@ -1,8 +1,8 @@
 package com.example.Web_sale_app.service.impl;
 
-import com.example.Web_sale_app.dto.AddToCartRequest;
-import com.example.Web_sale_app.dto.AddToCartResponse;
 import com.example.Web_sale_app.dto.CartItemDTO;
+import com.example.Web_sale_app.dto.Req.AddToCartRequest;
+import com.example.Web_sale_app.dto.Res.AddToCartResponse;
 import com.example.Web_sale_app.entity.Cart;
 import com.example.Web_sale_app.entity.CartItem;
 import com.example.Web_sale_app.entity.Product;
