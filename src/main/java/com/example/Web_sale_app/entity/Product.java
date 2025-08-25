@@ -1,5 +1,6 @@
 package com.example.Web_sale_app.entity;
 
+import com.example.Web_sale_app.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,8 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-
-import com.example.Web_sale_app.enums.ProductStatus;
 
 @Entity
 @Table(name = "products")

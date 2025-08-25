@@ -1,4 +1,4 @@
-package exception;
+package com.example.Web_sale_app.exception;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
