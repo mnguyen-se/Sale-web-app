@@ -1,8 +1,10 @@
 package com.example.Web_sale_app.controller;
 
 import com.example.Web_sale_app.entity.ReqDTO.ReqReviewDTO;
+import com.example.Web_sale_app.entity.UserDetail;
 import com.example.Web_sale_app.service.ReviewService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,8 +33,10 @@ public class ReviewController {
     }
 
     @DeleteMapping
-    public ResponseEntity<?> delete(long productId, long userId){
-        reviewService.deleteReview(productId, userId);
+    public ResponseEntity<?> delete(long productId, Authentication authentication){
+        UserDetail user = (UserDetail) authentication.getPrincipal();
+
+        reviewService.deleteReview(productId, user.getUser().getId());
         return ResponseEntity.ok("Delete review successfully!");
     }
 }

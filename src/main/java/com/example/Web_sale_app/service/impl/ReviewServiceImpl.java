@@ -8,6 +8,7 @@ import com.example.Web_sale_app.repository.ProductRepository;
 import com.example.Web_sale_app.repository.ReviewRepository;
 import com.example.Web_sale_app.repository.UserRepository;
 import com.example.Web_sale_app.service.ReviewService;
+import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +51,7 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewRepository.findByUser_Id(userId);
     }
 
-    @PreAuthorize( "hasRole('ADMIN') or hasRole('CUSTOMER')")
+    @Transactional
     @Override
     public void deleteReview(Long productId, Long userId) {
         reviewRepository.deleteByProduct_IdAndUser_Id(productId, userId);

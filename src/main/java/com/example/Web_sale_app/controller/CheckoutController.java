@@ -29,7 +29,6 @@ public class CheckoutController {
         return ResponseEntity.ok(res);
     }
 
-
     @GetMapping("/code")
     public ResponseEntity<?> getQRCode(
             @RequestParam long amount

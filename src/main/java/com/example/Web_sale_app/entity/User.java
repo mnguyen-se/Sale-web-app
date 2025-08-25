@@ -34,6 +34,7 @@ public class User {
 
     private boolean enabled = false;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role; // customer, seller, admin
 
