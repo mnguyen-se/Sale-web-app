@@ -2,11 +2,9 @@ package com.example.Web_sale_app.controller;
 
 import com.example.Web_sale_app.entity.User;
 import com.example.Web_sale_app.enums.Role;
-import com.example.Web_sale_app.service.UserService;
 import com.example.Web_sale_app.service.UserProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
