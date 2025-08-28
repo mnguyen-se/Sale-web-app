@@ -88,13 +88,11 @@ public class CatalogServiceImpl implements CatalogService {
         return listProductsInternal(categoryId, q, minPrice, maxPrice, pageable, true);
     }
 
-
     @Override
     public Optional<ProductDTO> getProductDetailDTO(Long id) {
         return productRepository.findById(id).map(this::mapToDTO);
     }
     
-    // Hàm private dùng chung để map Product sang ProductDTO
     private ProductDTO mapToDTO(Product p) {
         return new ProductDTO(
                 p.getId(),
@@ -108,8 +106,8 @@ public class CatalogServiceImpl implements CatalogService {
         );
     }
 
-    // Hàm private dùng chung để map ProductDTO sang Product (tạo mới)
-    private Product mapDtoToProduct(ProductDTO dto, Long sellerId, boolean isAdmin) {
+    // Loại bỏ sellerId parameter vì không còn seller field
+    private Product mapDtoToProduct(ProductDTO dto, boolean isAdmin) {
         Product p = new Product();
         p.setName(dto.name());
         p.setImageUrl(dto.imageUrl());
@@ -117,23 +115,16 @@ public class CatalogServiceImpl implements CatalogService {
         p.setDescription(dto.description());
         p.setPrice(dto.price());
         p.setStock(dto.stock());
-        // Admin tạo mặc định active, seller thì có thể set sau
-        p.setActive(isAdmin || p.isActive());
+        p.setActive(isAdmin); // Admin tạo mặc định active
 
         if (dto.categoryName() != null) {
             categoryRepository.findByNameIgnoreCase(dto.categoryName())
                     .ifPresent(p::setCategory);
         }
 
-        if (!isAdmin && sellerId != null) {
-            com.example.Web_sale_app.entity.User seller = new com.example.Web_sale_app.entity.User();
-            seller.setId(sellerId);
-            p.setSeller(seller);
-        }
         return p;
     }
 
-    // Hàm private dùng chung để cập nhật Product từ DTO
     private void updateProductFromDto(Product p, ProductDTO dto) {
         p.setName(dto.name());
         p.setDescription(dto.description());
@@ -147,30 +138,27 @@ public class CatalogServiceImpl implements CatalogService {
         }
     }
 
-    // CREATE
+    // CREATE - Loại bỏ sellerId parameters
     @Override
-    public ProductDTO createProduct(ProductDTO dto, Long sellerId) {
-        Product p = mapDtoToProduct(dto, sellerId, false);
+    public ProductDTO createProduct(ProductDTO dto) {
+        Product p = mapDtoToProduct(dto, false);
         Product saved = productRepository.save(p);
         return mapToDTO(saved);
     }
 
     @Override
     public ProductDTO createProductAsAdmin(ProductDTO dto) {
-        Product p = mapDtoToProduct(dto, null, true);
-        p.setActive(true); // Admin tạo mặc định active
+        Product p = mapDtoToProduct(dto, true);
+        p.setActive(true);
         Product saved = productRepository.save(p);
         return mapToDTO(saved);
     }
 
-    // UPDATE
+    // UPDATE - Loại bỏ seller authorization checks
     @Override
-    public ProductDTO updateProduct(Long id, ProductDTO dto, Long sellerId) {
+    public ProductDTO updateProduct(Long id, ProductDTO dto) {
         Product p = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-        if (sellerId != null && !p.getSeller().getId().equals(sellerId)) {
-            throw new SecurityException("Không có quyền sửa sản phẩm này");
-        }
         updateProductFromDto(p, dto);
         return mapToDTO(productRepository.save(p));
     }
@@ -183,13 +171,11 @@ public class CatalogServiceImpl implements CatalogService {
         return mapToDTO(productRepository.save(p));
     }
 
+    // DELETE - Loại bỏ seller authorization checks
     @Override
-    public void deleteProduct(Long id, Long sellerId) {
+    public void deleteProduct(Long id) {
         Product p = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-        if (sellerId != null && !p.getSeller().getId().equals(sellerId)) {
-            throw new SecurityException("Không có quyền xóa sản phẩm này");
-        }
         productRepository.delete(p);
     }
 
@@ -200,27 +186,15 @@ public class CatalogServiceImpl implements CatalogService {
         productRepository.delete(p);
     }
 
+    // HIDE/UNHIDE - Loại bỏ seller authorization checks
     @Override
-    public void hideProduct(Long id, Long sellerId) {
-        // Cập nhật để sử dụng logic UC11
-        hideProductTemporary(id, sellerId);
+    public void hideProduct(Long id) {
+        hideProductTemporary(id);
     }
 
-    // XÓA method này - bị trùng với UC11
-    // @Override
-    // public void unhideProduct(Long id, Long sellerId) {
-    //     updateProductActiveStatus(id, sellerId, true);
-    // }
-    
-    // Hàm private dùng chung để cập nhật trạng thái active của sản phẩm
-    private void updateProductActiveStatus(Long id, Long sellerId, boolean isActive) {
+    private void updateProductActiveStatus(Long id, boolean isActive) {
         Product p = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-
-        if (sellerId != null && !p.getSeller().getId().equals(sellerId)) {
-            throw new SecurityException("Không có quyền thay đổi trạng thái sản phẩm này");
-        }
-
         p.setActive(isActive);
         productRepository.save(p);
     }
@@ -233,8 +207,6 @@ public class CatalogServiceImpl implements CatalogService {
                 .toList();
     }
 
-    // ===== ADMIN CRUD METHODS =====
-    
     @Override
     public Page<ProductDTO> listAllProductsForAdmin(Pageable pageable) {
         Page<Product> products = productRepository.findAll(pageable);
@@ -249,9 +221,6 @@ public class CatalogServiceImpl implements CatalogService {
         productRepository.save(p);
     }
 
-    /**
-     * Admin method to hide product without seller authorization check
-     */
     @Override
     public void hideProductAsAdmin(Long id) {
         Product p = productRepository.findById(id)
@@ -261,22 +230,16 @@ public class CatalogServiceImpl implements CatalogService {
         productRepository.save(p);
     }
 
-    /**
-     * Admin method to unhide product without seller authorization check
-     */
     @Override
     public void unhideProductAsAdmin(Long id) {
         Product p = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-        
-        // Admin có thể unhide từ bất kỳ trạng thái nào thành PUBLISHED
         p.setStatus(ProductStatus.PUBLISHED);
         p.setActive(true);
         productRepository.save(p);
     }
 
-    // ===== CATEGORY CRUD FOR ADMIN =====
-    
+    // CATEGORY CRUD
     @Override
     public com.example.Web_sale_app.entity.Category createCategory(com.example.Web_sale_app.entity.Category category) {
         return categoryRepository.save(category);
@@ -305,49 +268,39 @@ public class CatalogServiceImpl implements CatalogService {
         return categoryRepository.findById(id);
     }
 
-    // UC11 - Seller Product Management Implementation
-    
-    /**
-     * Tạo sản phẩm mới ở trạng thái nháp
-     */
+    // UC11 - Loại bỏ seller-specific methods hoặc chuyển thành generic
     @Override
-    public ProductDTO createProductDraft(ProductDTO dto, Long sellerId) {
-        Product p = mapDtoToProduct(dto, sellerId, false);
+    public ProductDTO createProductDraft(ProductDTO dto) {
+        Product p = mapDtoToProduct(dto, false);
         p.setStatus(ProductStatus.DRAFT);
-        p.setActive(false); // Nháp chưa active
+        p.setActive(false);
         Product saved = productRepository.save(p);
         return mapToDTO(saved);
     }
     
-    /**
-     * Lưu nháp sản phẩm (cập nhật mà không xuất bản)
-     */
     @Override
-    public ProductDTO saveProductDraft(Long id, ProductDTO dto, Long sellerId) {
-        Product p = findProductWithSellerCheck(id, sellerId);
+    public ProductDTO saveProductDraft(Long id, ProductDTO dto) {
+        Product p = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         
-        // Chỉ cho phép lưu nháp khi đang ở trạng thái DRAFT
         if (p.getStatus() != ProductStatus.DRAFT) {
             throw new IllegalStateException("Chỉ có thể lưu nháp khi sản phẩm ở trạng thái nháp");
         }
         
         updateProductFromDto(p, dto);
-        p.setActive(false); // Đảm bảo nháp không active
+        p.setActive(false);
         return mapToDTO(productRepository.save(p));
     }
     
-    /**
-     * Xuất bản sản phẩm từ nháp
-     */
     @Override
-    public ProductDTO publishProduct(Long id, Long sellerId) {
-        Product p = findProductWithSellerCheck(id, sellerId);
+    public ProductDTO publishProduct(Long id) {
+        Product p = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         
         if (p.getStatus() != ProductStatus.DRAFT) {
             throw new IllegalStateException("Chỉ có thể xuất bản sản phẩm từ trạng thái nháp");
         }
         
-        // Validate required fields before publishing
         validateProductForPublishing(p);
         
         p.setStatus(ProductStatus.PUBLISHED);
@@ -355,12 +308,10 @@ public class CatalogServiceImpl implements CatalogService {
         return mapToDTO(productRepository.save(p));
     }
     
-    /**
-     * Ẩn sản phẩm tạm thời
-     */
     @Override
-    public void hideProductTemporary(Long id, Long sellerId) {
-        Product p = findProductWithSellerCheck(id, sellerId);
+    public void hideProductTemporary(Long id) {
+        Product p = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         
         if (p.getStatus() != ProductStatus.PUBLISHED) {
             throw new IllegalStateException("Chỉ có thể ẩn sản phẩm đã xuất bản");
@@ -371,12 +322,10 @@ public class CatalogServiceImpl implements CatalogService {
         productRepository.save(p);
     }
     
-    /**
-     * Hiện lại sản phẩm đã ẩn - METHOD CHÍNH (giữ lại)
-     */
     @Override
-    public void unhideProduct(Long id, Long sellerId) {
-        Product p = findProductWithSellerCheck(id, sellerId);
+    public void unhideProduct(Long id) {
+        Product p = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         
         if (p.getStatus() != ProductStatus.HIDDEN) {
             throw new IllegalStateException("Chỉ có thể hiện lại sản phẩm đã ẩn");
@@ -387,28 +336,19 @@ public class CatalogServiceImpl implements CatalogService {
         productRepository.save(p);
     }
     
-    /**
-     * Clone sản phẩm từ sản phẩm khác
-     */
     @Override
-    public ProductDTO cloneProduct(Long sourceProductId, Long sellerId) {
+    public ProductDTO cloneProduct(Long sourceProductId) {
         Product sourceProduct = productRepository.findById(sourceProductId)
                 .orElseThrow(() -> new RuntimeException("Source product not found with id: " + sourceProductId));
         
-        // Tạo bản copy
         Product clonedProduct = new Product();
         clonedProduct.setName(sourceProduct.getName() + " (Copy)");
         clonedProduct.setDescription(sourceProduct.getDescription());
         clonedProduct.setPrice(sourceProduct.getPrice());
-        clonedProduct.setStock(0); // Reset stock cho bản copy
+        clonedProduct.setStock(0);
         clonedProduct.setImageUrl(sourceProduct.getImageUrl());
         clonedProduct.setManufacturer(sourceProduct.getManufacturer());
         clonedProduct.setCategory(sourceProduct.getCategory());
-        
-        // Set seller và trạng thái nháp
-        com.example.Web_sale_app.entity.User seller = new com.example.Web_sale_app.entity.User();
-        seller.setId(sellerId);
-        clonedProduct.setSeller(seller);
         clonedProduct.setStatus(ProductStatus.DRAFT);
         clonedProduct.setActive(false);
         
@@ -416,14 +356,10 @@ public class CatalogServiceImpl implements CatalogService {
         return mapToDTO(saved);
     }
     
-    /**
-     * Lấy danh sách sản phẩm theo trạng thái của seller
-     */
     @Override
-    public Page<ProductDTO> getProductsByStatusForSeller(Long sellerId, ProductStatus status, Pageable pageable) {
+    public Page<ProductDTO> getProductsByStatus(ProductStatus status, Pageable pageable) {
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("seller").get("id"), sellerId));
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
             }
@@ -434,14 +370,11 @@ public class CatalogServiceImpl implements CatalogService {
         return products.map(this::mapToDTO);
     }
     
-    /**
-     * Cập nhật trạng thái sản phẩm
-     */
     @Override
-    public ProductDTO updateProductStatus(Long id, ProductStatus status, Long sellerId) {
-        Product p = findProductWithSellerCheck(id, sellerId);
+    public ProductDTO updateProductStatus(Long id, ProductStatus status) {
+        Product p = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         
-        // Validate transition rules
         validateStatusTransition(p.getStatus(), status);
         
         p.setStatus(status);
@@ -450,25 +383,109 @@ public class CatalogServiceImpl implements CatalogService {
         return mapToDTO(productRepository.save(p));
     }
     
-    // Helper methods
-    
-    /**
-     * Tìm sản phẩm và kiểm tra quyền seller
-     */
-    private Product findProductWithSellerCheck(Long id, Long sellerId) {
+    // UC12 - STOCK MANAGEMENT (loại bỏ seller checks)
+    @Override
+    public ProductDTO updateProductStock(Long id, Integer newStock) {
         Product p = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         
-        if (!p.getSeller().getId().equals(sellerId)) {
-            throw new SecurityException("Không có quyền thao tác với sản phẩm này");
-        }
+        validateStockQuantity(newStock);
         
-        return p;
+        Integer oldStock = p.getStock();
+        p.setStock(newStock);
+        
+        logStockChange(id, oldStock, newStock, "MANUAL_UPDATE");
+        checkLowStockAlert(p);
+        
+        Product saved = productRepository.save(p);
+        return mapToDTO(saved);
     }
     
-    /**
-     * Validate sản phẩm trước khi xuất bản
-     */
+    @Override
+    public List<ProductDTO> updateBatchStock(List<StockUpdateRequest> stockUpdates) {
+        List<ProductDTO> updatedProducts = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        
+        for (StockUpdateRequest request : stockUpdates) {
+            try {
+                Product p = productRepository.findById(request.productId())
+                        .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.productId()));
+                
+                validateStockQuantity(request.newStock());
+                
+                Integer oldStock = p.getStock();
+                p.setStock(request.newStock());
+                
+                logStockChange(request.productId(), oldStock, request.newStock(), "BATCH_UPDATE");
+                checkLowStockAlert(p);
+                
+                Product saved = productRepository.save(p);
+                updatedProducts.add(mapToDTO(saved));
+                
+            } catch (Exception e) {
+                errors.add("Sản phẩm ID " + request.productId() + ": " + e.getMessage());
+            }
+        }
+        
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException("Lỗi cập nhật hàng loạt: " + String.join("; ", errors));
+        }
+        
+        return updatedProducts;
+    }
+    
+    @Override
+    public void configureLowStockAlert(Long productId, Integer threshold) {
+        Product p = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+        
+        if (threshold == null || threshold < 0) {
+            throw new IllegalArgumentException("Ngưỡng cảnh báo phải >= 0");
+        }
+        
+        p.setLowStockThreshold(threshold);
+        productRepository.save(p);
+        
+        if (p.getStock() <= threshold) {
+            triggerLowStockAlert(p);
+        }
+    }
+    
+    @Override
+    public Page<ProductDTO> getLowStockProducts(Pageable pageable) {
+        Specification<Product> spec = (root, query, cb) -> {
+            return cb.lessThanOrEqualTo(root.get("stock"), root.get("lowStockThreshold"));
+        };
+        
+        Page<Product> products = productRepository.findAll(spec, pageable);
+        return products.map(this::mapToDTO);
+    }
+    
+    @Override
+    public StockReport getStockReport() {
+        List<Product> products = productRepository.findAll();
+        
+        int totalProducts = products.size();
+        int inStockProducts = (int) products.stream().filter(p -> p.getStock() > 0).count();
+        int outOfStockProducts = totalProducts - inStockProducts;
+        int lowStockProducts = (int) products.stream()
+                .filter(p -> p.getStock() <= (p.getLowStockThreshold() != null ? p.getLowStockThreshold() : 0))
+                .count();
+        
+        BigDecimal totalStockValue = products.stream()
+                .map(p -> p.getPrice().multiply(BigDecimal.valueOf(p.getStock())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        return new StockReport(
+            totalProducts,
+            inStockProducts,
+            outOfStockProducts,
+            lowStockProducts,
+            totalStockValue
+        );
+    }
+    
+    // Helper methods
     private void validateProductForPublishing(Product product) {
         List<String> errors = new ArrayList<>();
         
@@ -493,11 +510,7 @@ public class CatalogServiceImpl implements CatalogService {
         }
     }
     
-    /**
-     * Validate chuyển trạng thái hợp lệ
-     */
     private void validateStatusTransition(ProductStatus from, ProductStatus to) {
-        // Định nghĩa các chuyển trạng thái hợp lệ
         boolean isValidTransition = switch (from) {
             case DRAFT -> to == ProductStatus.PUBLISHED;
             case PUBLISHED -> to == ProductStatus.HIDDEN;
@@ -511,213 +524,6 @@ public class CatalogServiceImpl implements CatalogService {
         }
     }
 
-    // ===== UC12 - STOCK MANAGEMENT =====
-    
-    /**
-     * UC12 - Cập nhật tồn kho đơn lẻ
-     */
-    @Override
-    public ProductDTO updateProductStock(Long id, Integer newStock, Long sellerId) {
-        Product p = findProductWithSellerCheck(id, sellerId);
-        
-        // Kiểm tra có đơn hàng đang xử lý không
-        if (hasActiveOrders(id)) {
-            throw new IllegalStateException("Không thể cập nhật tồn kho khi có đơn hàng đang xử lý");
-        }
-        
-        validateStockQuantity(newStock);
-        
-        Integer oldStock = p.getStock();
-        p.setStock(newStock);
-        
-        // Ghi log thay đổi tồn kho
-        logStockChange(id, sellerId, oldStock, newStock, "MANUAL_UPDATE");
-        
-        // Kiểm tra và kích hoạt cảnh báo tồn thấp
-        checkLowStockAlert(p, sellerId);
-        
-        Product saved = productRepository.save(p);
-        return mapToDTO(saved);
-    }
-    
-    /**
-     * UC12 - Cập nhật tồn kho hàng loạt
-     */
-    @Override
-    public List<ProductDTO> updateBatchStock(List<StockUpdateRequest> stockUpdates, Long sellerId) {
-        List<ProductDTO> updatedProducts = new ArrayList<>();
-        List<String> errors = new ArrayList<>();
-        
-        for (StockUpdateRequest request : stockUpdates) {
-            try {
-                // Kiểm tra sản phẩm tồn tại và quyền
-                Product p = findProductWithSellerCheck(request.productId(), sellerId);
-                
-                // Kiểm tra có đơn hàng đang xử lý
-                if (hasActiveOrders(request.productId())) {
-                    errors.add("Sản phẩm ID " + request.productId() + " có đơn hàng đang xử lý");
-                    continue;
-                }
-                
-                validateStockQuantity(request.newStock());
-                
-                Integer oldStock = p.getStock();
-                p.setStock(request.newStock());
-                
-                // Ghi log
-                logStockChange(request.productId(), sellerId, oldStock, request.newStock(), "BATCH_UPDATE");
-                
-                // Kiểm tra cảnh báo
-                checkLowStockAlert(p, sellerId);
-                
-                Product saved = productRepository.save(p);
-                updatedProducts.add(mapToDTO(saved));
-                
-            } catch (Exception e) {
-                errors.add("Sản phẩm ID " + request.productId() + ": " + e.getMessage());
-            }
-        }
-        
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException("Lỗi cập nhật hàng loạt: " + String.join("; ", errors));
-        }
-        
-        return updatedProducts;
-    }
-    
-    /**
-     * UC12 - Import tồn kho từ CSV
-     */
-    @Override
-    public StockImportResult importStockFromCsv(String csvContent, Long sellerId) {
-        List<String> errors = new ArrayList<>();
-        List<ProductDTO> successProducts = new ArrayList<>();
-        int totalRows = 0;
-        
-        try {
-            String[] lines = csvContent.split("\n");
-            
-            // Skip header row
-            for (int i = 1; i < lines.length; i++) {
-                totalRows++;
-                String line = lines[i].trim();
-                if (line.isEmpty()) continue;
-                
-                try {
-                    String[] columns = line.split(",");
-                    if (columns.length < 2) {
-                        errors.add("Dòng " + (i + 1) + ": Thiếu dữ liệu");
-                        continue;
-                    }
-                    
-                    Long productId = Long.parseLong(columns[0].trim());
-                    Integer newStock = Integer.parseInt(columns[1].trim());
-                    
-                    // Validate and update
-                    ProductDTO updated = updateProductStock(productId, newStock, sellerId);
-                    successProducts.add(updated);
-                    
-                } catch (NumberFormatException e) {
-                    errors.add("Dòng " + (i + 1) + ": Định dạng số không hợp lệ");
-                } catch (Exception e) {
-                    errors.add("Dòng " + (i + 1) + ": " + e.getMessage());
-                }
-            }
-            
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Lỗi xử lý file CSV: " + e.getMessage());
-        }
-        
-        return new StockImportResult(
-            totalRows,
-            successProducts.size(),
-            errors.size(),
-            successProducts,
-            errors
-        );
-    }
-    
-    /**
-     * UC12 - Cấu hình cảnh báo tồn kho thấp
-     */
-    @Override
-    public void configureLowStockAlert(Long productId, Integer threshold, Long sellerId) {
-        Product p = findProductWithSellerCheck(productId, sellerId);
-        
-        if (threshold == null || threshold < 0) {
-            throw new IllegalArgumentException("Ngưỡng cảnh báo phải >= 0");
-        }
-        
-        // Lưu cấu hình cảnh báo (có thể lưu trong Product entity hoặc bảng riêng)
-        p.setLowStockThreshold(threshold);
-        productRepository.save(p);
-        
-        // Kiểm tra ngay lập tức
-        if (p.getStock() <= threshold) {
-            triggerLowStockAlert(p, sellerId);
-        }
-    }
-    
-    /**
-     * UC12 - Lấy danh sách sản phẩm tồn kho thấp
-     */
-    @Override
-    public Page<ProductDTO> getLowStockProducts(Long sellerId, Pageable pageable) {
-        Specification<Product> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("seller").get("id"), sellerId));
-            
-            // So sánh stock <= lowStockThreshold
-            predicates.add(cb.lessThanOrEqualTo(root.get("stock"), root.get("lowStockThreshold")));
-            
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
-        
-        Page<Product> products = productRepository.findAll(spec, pageable);
-        return products.map(this::mapToDTO);
-    }
-    
-    /**
-     * UC12 - Lấy báo cáo tồn kho
-     */
-    @Override
-    public StockReport getStockReport(Long sellerId) {
-        List<Product> products = productRepository.findBySeller_Id(sellerId);
-        
-        int totalProducts = products.size();
-        int inStockProducts = (int) products.stream().filter(p -> p.getStock() > 0).count();
-        int outOfStockProducts = totalProducts - inStockProducts;
-        int lowStockProducts = (int) products.stream()
-                .filter(p -> p.getStock() <= (p.getLowStockThreshold() != null ? p.getLowStockThreshold() : 0))
-                .count();
-        
-        BigDecimal totalStockValue = products.stream()
-                .map(p -> p.getPrice().multiply(BigDecimal.valueOf(p.getStock())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        return new StockReport(
-            totalProducts,
-            inStockProducts,
-            outOfStockProducts,
-            lowStockProducts,
-            totalStockValue
-        );
-    }
-    
-    // ===== HELPER METHODS FOR UC12 =====
-    
-    /**
-     * Kiểm tra có đơn hàng đang xử lý cho sản phẩm này không
-     */
-    private boolean hasActiveOrders(Long productId) {
-        // Logic kiểm tra OrderItem có status PENDING/PROCESSING
-        // Cần inject OrderItemRepository để check
-        return false; // Placeholder - implement based on your OrderItem repository
-    }
-    
-    /**
-     * Validate số lượng tồn kho
-     */
     private void validateStockQuantity(Integer stock) {
         if (stock == null || stock < 0) {
             throw new IllegalArgumentException("Số lượng tồn kho phải >= 0");
@@ -727,41 +533,27 @@ public class CatalogServiceImpl implements CatalogService {
         }
     }
     
-    /**
-     * Ghi log thay đổi tồn kho
-     */
-    private void logStockChange(Long productId, Long sellerId, Integer oldStock, Integer newStock, String changeType) {
-        // Log stock change - có thể lưu vào database hoặc file log
+    private void logStockChange(Long productId, Integer oldStock, Integer newStock, String changeType) {
         System.out.println(String.format(
-            "STOCK_CHANGE: Product %d, Seller %d, %d -> %d (%s)",
-            productId, sellerId, oldStock, newStock, changeType
+            "STOCK_CHANGE: Product %d, %d -> %d (%s)",
+            productId, oldStock, newStock, changeType
         ));
     }
     
-    /**
-     * Kiểm tra và kích hoạt cảnh báo tồn thấp
-     */
-    private void checkLowStockAlert(Product product, Long sellerId) {
+    private void checkLowStockAlert(Product product) {
         Integer threshold = product.getLowStockThreshold();
         if (threshold != null && product.getStock() <= threshold) {
-            triggerLowStockAlert(product, sellerId);
+            triggerLowStockAlert(product);
         }
     }
     
-    /**
-     * Kích hoạt cảnh báo tồn kho thấp
-     */
-    private void triggerLowStockAlert(Product product, Long sellerId) {
-        // Gửi email, notification, etc.
+    private void triggerLowStockAlert(Product product) {
         System.out.println(String.format(
             "LOW_STOCK_ALERT: Product '%s' (ID: %d) has low stock: %d (threshold: %d)",
             product.getName(), product.getId(), product.getStock(), product.getLowStockThreshold()
         ));
-        
-        // TODO: Implement actual alert mechanism
-        // - Send email to seller
-        // - Create in-app notification
-        // - Log to alert table
     }
 
+    // Không cần CSV import vì không có seller context
+    // Có thể implement cho admin use case
 }

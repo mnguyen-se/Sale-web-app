@@ -1,17 +1,11 @@
 package com.example.Web_sale_app.controller;
 
-import com.example.Web_sale_app.entity.ReqDTO.ReqLoginDTO;
-import com.example.Web_sale_app.entity.ReqDTO.ReqRegisterDTO;
 import com.example.Web_sale_app.entity.User;
-import com.example.Web_sale_app.entity.UserDetail;
 import com.example.Web_sale_app.enums.Role;
-import com.example.Web_sale_app.service.MyUsersDetailService;
-import com.example.Web_sale_app.service.UserService;
+import com.example.Web_sale_app.service.UserProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +15,7 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class UserController {
     @Autowired
-    private UserService userService;
+    private UserProfileService userService;
 
     @GetMapping("/All")
     public List<User> findAllUsers(){

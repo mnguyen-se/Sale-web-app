@@ -12,7 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/products")
@@ -22,25 +22,29 @@ public class AdminProductController {
 
     private final CatalogService catalogService;
 
+    // ===== PRODUCT CRUD OPERATIONS =====
+
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(@RequestBody ProductDTO dto) {
-        ProductDTO created = catalogService.createProductAsAdmin(dto); // Sử dụng method admin
+        ProductDTO created = catalogService.createProductAsAdmin(dto);
         return ResponseEntity.ok(created);
     }
 
-    @PatchMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id, @RequestBody ProductDTO dto) {
-        ProductDTO updated = catalogService.updateProductAsAdmin(id, dto); // Sử dụng method admin
+        ProductDTO updated = catalogService.updateProductAsAdmin(id, dto);
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        catalogService.deleteProductAsAdmin(id); // Sử dụng method admin
+        catalogService.deleteProductAsAdmin(id);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/products")
+    // ===== PRODUCT LISTING =====
+
+    @GetMapping
     public Page<ProductDTO> listProducts(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String search,
@@ -51,9 +55,17 @@ public class AdminProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size
     ) {
-        String sortField = switch (sort) { case "name" -> "name"; case "price" -> "price"; default -> "createdAt"; };
+        String sortField = switch (sort) { 
+            case "name" -> "name"; 
+            case "price" -> "price"; 
+            default -> "createdAt"; 
+        };
         Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), Sort.by(direction, sortField));
+        Pageable pageable = PageRequest.of(
+            Math.max(page, 0), 
+            Math.min(Math.max(size, 1), 100), 
+            Sort.by(direction, sortField)
+        );
         
         // Admin có thể lấy tất cả sản phẩm hoặc filter
         if (categoryId == null && search == null && minPrice == null && maxPrice == null) {
@@ -62,28 +74,95 @@ public class AdminProductController {
         return catalogService.listProducts(categoryId, search, minPrice, maxPrice, pageable);
     }
 
-    @PatchMapping("/toggle-active/{id}")
-    public ResponseEntity<Void> toggleProductActiveStatus(@PathVariable Long id) {
-        catalogService.toggleProductActiveStatus(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/hidden/{id}")
-    public ResponseEntity<Void> hiddenProduct(@PathVariable Long id) {
-        catalogService.hideProduct(id, null);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/unhidden/{id}")
-    public ResponseEntity<Void> unhiddenProduct(@PathVariable Long id) {
-        catalogService.unhideProduct(id, null);
-        return ResponseEntity.noContent().build();
-    }
-
     @GetMapping("/active")
-    public ResponseEntity<java.util.List<ProductDTO>> listAllActiveProducts() {
+    public ResponseEntity<List<ProductDTO>> listAllActiveProducts() {
         return ResponseEntity.ok(catalogService.listAllActiveProducts());
     }
 
-   
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDTO> getProductDetail(@PathVariable Long id) {
+        return catalogService.getProductDetailDTO(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ===== PRODUCT STATUS MANAGEMENT =====
+
+    @PatchMapping("/{id}/toggle-active")
+    public ResponseEntity<Void> toggleProductActiveStatus(@PathVariable Long id) {
+        try {
+            catalogService.toggleProductActiveStatus(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/{id}/hide")
+    public ResponseEntity<Void> hideProduct(@PathVariable Long id) {
+        try {
+            catalogService.hideProductAsAdmin(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/{id}/unhide")
+    public ResponseEntity<Void> unhideProduct(@PathVariable Long id) {
+        try {
+            catalogService.unhideProductAsAdmin(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // ===== ADVANCED PRODUCT MANAGEMENT =====
+
+    @PostMapping("/{id}/clone")
+    public ResponseEntity<ProductDTO> cloneProduct(@PathVariable Long id) {
+        try {
+            ProductDTO cloned = catalogService.cloneProduct(id);
+            return ResponseEntity.ok(cloned);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/status/{status}")
+    public ResponseEntity<Page<ProductDTO>> getProductsByStatus(
+            @PathVariable String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        try {
+            com.example.Web_sale_app.enums.ProductStatus productStatus = 
+                com.example.Web_sale_app.enums.ProductStatus.valueOf(status.toUpperCase());
+            
+            Pageable pageable = PageRequest.of(page, size);
+            Page<ProductDTO> products = catalogService.getProductsByStatus(productStatus, pageable);
+            return ResponseEntity.ok(products);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/{id}/status/{status}")
+    public ResponseEntity<ProductDTO> updateProductStatus(
+            @PathVariable Long id, 
+            @PathVariable String status) {
+        try {
+            com.example.Web_sale_app.enums.ProductStatus productStatus = 
+                com.example.Web_sale_app.enums.ProductStatus.valueOf(status.toUpperCase());
+            
+            ProductDTO updated = catalogService.updateProductStatus(id, productStatus);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

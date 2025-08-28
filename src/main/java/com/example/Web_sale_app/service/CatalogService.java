@@ -3,7 +3,7 @@ package com.example.Web_sale_app.service;
 import com.example.Web_sale_app.dto.ProductDTO;
 import com.example.Web_sale_app.dto.StockImportResult;
 import com.example.Web_sale_app.dto.StockReport;
-import com.example.Web_sale_app.dto.Req.StockUpdateRequest;  // ✅ Thêm import này
+import com.example.Web_sale_app.dto.Req.StockUpdateRequest;
 import com.example.Web_sale_app.entity.Category;
 import com.example.Web_sale_app.enums.ProductStatus;
 
@@ -31,12 +31,12 @@ public interface CatalogService {
     Optional<ProductDTO> getProductDetailDTO(Long id);
     List<ProductDTO> listAllActiveProducts();
     
-    // ===== SELLER PRODUCT MANAGEMENT =====
-    ProductDTO createProduct(ProductDTO dto, Long sellerId);
-    ProductDTO updateProduct(Long id, ProductDTO dto, Long sellerId);
-    void deleteProduct(Long id, Long sellerId);
-    void hideProduct(Long id, Long sellerId);
-    void unhideProduct(Long id, Long sellerId);
+    // ===== PRODUCT MANAGEMENT (Generic - no seller distinction) =====
+    ProductDTO createProduct(ProductDTO dto);
+    ProductDTO updateProduct(Long id, ProductDTO dto);
+    void deleteProduct(Long id);
+    void hideProduct(Long id);
+    void unhideProduct(Long id);
     
     // ===== ADMIN PRODUCT MANAGEMENT =====
     ProductDTO createProductAsAdmin(ProductDTO dto);
@@ -47,46 +47,41 @@ public interface CatalogService {
     Page<ProductDTO> listAllProductsForAdmin(Pageable pageable);
     void toggleProductActiveStatus(Long id);
     
-    // ===== UC11 - SELLER PRODUCT WORKFLOW =====
-    ProductDTO createProductDraft(ProductDTO dto, Long sellerId);
-    ProductDTO saveProductDraft(Long id, ProductDTO dto, Long sellerId);
-    ProductDTO publishProduct(Long id, Long sellerId);
-    void hideProductTemporary(Long id, Long sellerId);
-    ProductDTO cloneProduct(Long sourceProductId, Long sellerId);
-    Page<ProductDTO> getProductsByStatusForSeller(Long sellerId, ProductStatus status, Pageable pageable);
-    ProductDTO updateProductStatus(Long id, ProductStatus status, Long sellerId);
+    // ===== UC11 - PRODUCT WORKFLOW (Generic) =====
+    ProductDTO createProductDraft(ProductDTO dto);
+    ProductDTO saveProductDraft(Long id, ProductDTO dto);
+    ProductDTO publishProduct(Long id);
+    void hideProductTemporary(Long id);
+    ProductDTO cloneProduct(Long sourceProductId);
+    Page<ProductDTO> getProductsByStatus(ProductStatus status, Pageable pageable);
+    ProductDTO updateProductStatus(Long id, ProductStatus status);
     
-    // ===== UC12 - STOCK MANAGEMENT =====  ✅ Thêm section này
+    // ===== UC12 - STOCK MANAGEMENT (Generic) =====
     
     /**
      * UC12 - Cập nhật tồn kho đơn lẻ
      */
-    ProductDTO updateProductStock(Long id, Integer newStock, Long sellerId);
+    ProductDTO updateProductStock(Long id, Integer newStock);
     
     /**
      * UC12 - Cập nhật tồn kho hàng loạt
      */
-    List<ProductDTO> updateBatchStock(List<StockUpdateRequest> stockUpdates, Long sellerId);
-    
-    /**
-     * UC12 - Import tồn kho từ CSV
-     */
-    StockImportResult importStockFromCsv(String csvContent, Long sellerId);
+    List<ProductDTO> updateBatchStock(List<StockUpdateRequest> stockUpdates);
     
     /**
      * UC12 - Cấu hình cảnh báo tồn kho thấp
      */
-    void configureLowStockAlert(Long productId, Integer threshold, Long sellerId);
+    void configureLowStockAlert(Long productId, Integer threshold);
     
     /**
      * UC12 - Lấy danh sách sản phẩm tồn kho thấp
      */
-    Page<ProductDTO> getLowStockProducts(Long sellerId, Pageable pageable);
+    Page<ProductDTO> getLowStockProducts(Pageable pageable);
     
     /**
      * UC12 - Lấy báo cáo tồn kho
      */
-    StockReport getStockReport(Long sellerId);
+    StockReport getStockReport();
     
     // ===== FUTURE FEATURES (DEFAULT IMPLEMENTATIONS) =====
     default Page<ProductDTO> searchProductsByKeywords(String[] keywords, Pageable pageable) {
@@ -103,5 +98,10 @@ public interface CatalogService {
     
     default List<ProductDTO> getFeaturedProducts(int limit) {
         throw new UnsupportedOperationException("Not implemented yet");
+    }
+    
+    // ===== ADMIN-ONLY FEATURES (if needed in future) =====
+    default StockImportResult importStockFromCsv(String csvContent) {
+        throw new UnsupportedOperationException("CSV import not implemented yet");
     }
 }

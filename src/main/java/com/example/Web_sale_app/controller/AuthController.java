@@ -5,7 +5,7 @@ import com.example.Web_sale_app.entity.ReqDTO.ReqRegisterDTO;
 import com.example.Web_sale_app.entity.User;
 import com.example.Web_sale_app.service.AuthService;
 import com.example.Web_sale_app.service.BlacklistService;
-import com.example.Web_sale_app.service.UserService;
+import com.example.Web_sale_app.service.UserProfileService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +19,8 @@ import java.util.Map;
 public class AuthController {
     private final BlacklistService blacklistService;
     private final AuthService authService;
-    private final UserService userService;
-    public AuthController(BlacklistService blacklistService, AuthService authService, UserService userService) {
+    private final UserProfileService userService;
+    public AuthController(BlacklistService blacklistService, AuthService authService, UserProfileService userService) {
         this.blacklistService = blacklistService;
         this.authService = authService;
         this.userService = userService;

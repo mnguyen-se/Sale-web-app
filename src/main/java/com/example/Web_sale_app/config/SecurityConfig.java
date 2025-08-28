@@ -65,8 +65,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 👈 API JWT chuẩn
                 .authorizeHttpRequests(auth -> auth
-                        // Swagger
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Swagger và OpenAPI endpoints
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", 
+                                "/swagger-resources/**", "/webjars/**", "/swagger-ui/index.html").permitAll()
 
                         // Public catalog & cart
                         .requestMatchers("/api/catalog/**").permitAll()
@@ -102,6 +103,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Cấu hình Authentication Provider với BCrypt encoder
+     * Sử dụng builder pattern cho Spring Security 6+
+     * 
+     * @param userDetailsService service để load user details
+     * @return DaoAuthenticationProvider được cấu hình
+     */
     @Bean
     public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService){
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();

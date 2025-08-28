@@ -93,6 +93,7 @@ public class AuthServiceImpl implements AuthService {
         // Tạo user mới
         User user = new User();
         user.setUsername(req.getUsername());
+        user.setName(req.getName());
         user.setEmail(req.getEmail());
         user.setPassword(encodedPassword);
         user.setRole(Role.CUSTOMER);

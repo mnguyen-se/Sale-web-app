@@ -7,8 +7,6 @@ import com.example.Web_sale_app.dto.Req.StockUpdateRequest;
 import com.example.Web_sale_app.service.CatalogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,13 +26,13 @@ import java.util.Map;
 
 /**
  * Controller for UC12 - Stock Management
- * Handles inventory operations for sellers
+ * Handles inventory operations (Generic - no seller restriction)
  */
-@Tag(name = "Stock Management", description = "API quản lý tồn kho cho seller")
+@Tag(name = "Stock Management", description = "API quản lý tồn kho")
 @RestController
-@RequestMapping("/api/seller/stock")
+@RequestMapping("/api/stock")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SELLER')")
+@PreAuthorize("isAuthenticated()")
 public class StockManagementController {
 
     private final CatalogService catalogService;
@@ -51,7 +48,6 @@ public class StockManagementController {
     )
     @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
     @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ")
-    @ApiResponse(responseCode = "403", description = "Không có quyền")
     @ApiResponse(responseCode = "409", description = "Có đơn hàng đang xử lý")
     @PatchMapping("/{productId}")
     public ResponseEntity<ProductDTO> updateProductStock(
@@ -59,18 +55,15 @@ public class StockManagementController {
             @PathVariable Long productId,
             
             @Parameter(description = "Số lượng tồn kho mới", example = "100")
-            @RequestBody Map<String, Integer> request,
-            
-            Authentication auth) {
+            @RequestBody Map<String, Integer> request) {
         try {
-            Long sellerId = getSellerId(auth);
             Integer newStock = request.get("stock");
             
             if (newStock == null) {
                 return ResponseEntity.badRequest().build();
             }
             
-            ProductDTO updated = catalogService.updateProductStock(productId, newStock, sellerId);
+            ProductDTO updated = catalogService.updateProductStock(productId, newStock);
             return ResponseEntity.ok(updated);
             
         } catch (IllegalStateException e) {
@@ -81,8 +74,6 @@ public class StockManagementController {
             return ResponseEntity.badRequest()
                     .header("Error-Message", e.getMessage())
                     .build();
-        } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
 
@@ -97,19 +88,15 @@ public class StockManagementController {
     )
     @PostMapping("/batch-update")
     public ResponseEntity<List<ProductDTO>> updateBatchStock(
-            @Valid @RequestBody List<StockUpdateRequest> stockUpdates,
-            Authentication auth) {
+            @Valid @RequestBody List<StockUpdateRequest> stockUpdates) {
         try {
-            Long sellerId = getSellerId(auth);
-            List<ProductDTO> updated = catalogService.updateBatchStock(stockUpdates, sellerId);
+            List<ProductDTO> updated = catalogService.updateBatchStock(stockUpdates);
             return ResponseEntity.ok(updated);
             
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .header("Error-Message", e.getMessage())
                     .build();
-        } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
 
@@ -125,11 +112,8 @@ public class StockManagementController {
     @PostMapping(value = "/import-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<StockImportResult> importStockFromCsv(
             @Parameter(description = "File CSV chứa dữ liệu tồn kho")
-            @RequestParam("file") MultipartFile file,
-            Authentication auth) {
+            @RequestParam("file") MultipartFile file) {
         try {
-            Long sellerId = getSellerId(auth);
-            
             // Validate file
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest()
@@ -144,7 +128,7 @@ public class StockManagementController {
             }
             
             String csvContent = new String(file.getBytes());
-            StockImportResult result = catalogService.importStockFromCsv(csvContent, sellerId);
+            StockImportResult result = catalogService.importStockFromCsv(csvContent);
             
             return ResponseEntity.ok(result);
             
@@ -155,6 +139,10 @@ public class StockManagementController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .header("Error-Message", e.getMessage())
+                    .build();
+        } catch (UnsupportedOperationException e) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
+                    .header("Error-Message", "CSV import chưa được triển khai")
                     .build();
         }
     }
@@ -185,25 +173,21 @@ public class StockManagementController {
     @PostMapping("/{productId}/low-stock-alert")
     public ResponseEntity<Void> configureLowStockAlert(
             @PathVariable Long productId,
-            @RequestBody Map<String, Integer> request,
-            Authentication auth) {
+            @RequestBody Map<String, Integer> request) {
         try {
-            Long sellerId = getSellerId(auth);
             Integer threshold = request.get("threshold");
             
             if (threshold == null) {
                 return ResponseEntity.badRequest().build();
             }
             
-            catalogService.configureLowStockAlert(productId, threshold, sellerId);
+            catalogService.configureLowStockAlert(productId, threshold);
             return ResponseEntity.ok().build();
             
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .header("Error-Message", e.getMessage())
                     .build();
-        } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
 
@@ -215,11 +199,8 @@ public class StockManagementController {
         description = "Lấy danh sách sản phẩm có tồn kho <= ngưỡng cảnh báo"
     )
     @GetMapping("/low-stock")
-    public ResponseEntity<Page<ProductDTO>> getLowStockProducts(
-            Authentication auth,
-            Pageable pageable) {
-        Long sellerId = getSellerId(auth);
-        Page<ProductDTO> lowStockProducts = catalogService.getLowStockProducts(sellerId, pageable);
+    public ResponseEntity<Page<ProductDTO>> getLowStockProducts(Pageable pageable) {
+        Page<ProductDTO> lowStockProducts = catalogService.getLowStockProducts(pageable);
         return ResponseEntity.ok(lowStockProducts);
     }
 
@@ -233,9 +214,8 @@ public class StockManagementController {
         description = "Lấy báo cáo tổng quan về tình trạng tồn kho"
     )
     @GetMapping("/report")
-    public ResponseEntity<StockReport> getStockReport(Authentication auth) {
-        Long sellerId = getSellerId(auth);
-        StockReport report = catalogService.getStockReport(sellerId);
+    public ResponseEntity<StockReport> getStockReport() {
+        StockReport report = catalogService.getStockReport();
         return ResponseEntity.ok(report);
     }
 
@@ -244,9 +224,8 @@ public class StockManagementController {
      */
     @Operation(summary = "Thống kê tồn kho chi tiết")
     @GetMapping("/statistics")
-    public ResponseEntity<Map<String, Object>> getStockStatistics(Authentication auth) {
-        Long sellerId = getSellerId(auth);
-        StockReport report = catalogService.getStockReport(sellerId);
+    public ResponseEntity<Map<String, Object>> getStockStatistics() {
+        StockReport report = catalogService.getStockReport();
         
         Map<String, Object> statistics = Map.of(
                 "totalProducts", report.totalProducts(),
@@ -263,15 +242,5 @@ public class StockManagementController {
         );
         
         return ResponseEntity.ok(statistics);
-    }
-
-    // ===== HELPER METHODS =====
-
-    /**
-     * Extract seller ID from authentication
-     */
-    private Long getSellerId(Authentication auth) {
-        // Implementation depends on your authentication setup
-        return Long.valueOf(auth.getName()); // Adjust based on your auth implementation
     }
 }
