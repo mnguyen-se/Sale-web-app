@@ -1,6 +1,7 @@
 package com.example.Web_sale_app.controller;
 
 import com.example.Web_sale_app.entity.ReqDTO.ReqReviewDTO;
+import com.example.Web_sale_app.entity.Review;
 import com.example.Web_sale_app.entity.UserDetail;
 import com.example.Web_sale_app.service.ReviewService;
 import org.springframework.http.ResponseEntity;

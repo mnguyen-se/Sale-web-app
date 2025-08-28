@@ -12,11 +12,11 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class SwaggerConfig {
-    
+
     /**
      * Cấu hình OpenAPI với JWT authentication cho Sale Web App
      * Định nghĩa security scheme và thông tin API documentation
-     * 
+     *
      * @return OpenAPI instance được cấu hình với JWT bearer authentication
      */
     @Bean
@@ -40,11 +40,11 @@ public class SwaggerConfig {
                                         .scheme("bearer")
                                         .bearerFormat("JWT")));
     }
-    
+
     /**
      * Cấu hình API group cho admin endpoints
      * Chỉ hiển thị các API dành cho quản trị viên
-     * 
+     *
      * @return GroupedOpenApi cho admin APIs
      */
     @Bean
@@ -54,11 +54,11 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/admin/**")
                 .build();
     }
-    
+
     /**
-     * Cấu hình API group cho seller endpoints  
+     * Cấu hình API group cho seller endpoints
      * Hiển thị các API dành cho người bán hàng
-     * 
+     *
      * @return GroupedOpenApi cho seller APIs
      */
     @Bean
@@ -68,11 +68,11 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/seller/**")
                 .build();
     }
-    
+
     /**
      * Cấu hình API group hiển thị tất cả public endpoints
      * Bao gồm các API không yêu cầu quyền admin hoặc seller
-     * 
+     *
      * @return GroupedOpenApi cho public APIs
      */
     @Bean
@@ -82,11 +82,11 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/auth/**", "/api/products/**", "/api/categories/**")
                 .build();
     }
-    
+
     /**
      * Cấu hình API group hiển thị tất cả endpoints
      * Tổng hợp tất cả APIs trong hệ thống
-     * 
+     *
      * @return GroupedOpenApi cho tất cả APIs
      */
     @Bean
@@ -94,6 +94,14 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("all")
                 .pathsToMatch("/api/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi userApi() {
+        return GroupedOpenApi.builder()
+                .group("user")
+                .pathsToMatch("/api/user/**")
                 .build();
     }
 }

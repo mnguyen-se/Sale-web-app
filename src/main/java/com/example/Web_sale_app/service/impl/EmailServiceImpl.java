@@ -23,7 +23,7 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom("nguyennmse184571@gmail.com"); // phải khớp config
+            helper.setFrom("nguyennmse184571@fpt.edu.vn"); // phải khớp config
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true); // true = gửi HTML

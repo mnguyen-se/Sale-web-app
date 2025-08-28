@@ -66,7 +66,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 👈 API JWT chuẩn
                 .authorizeHttpRequests(auth -> auth
                         // Swagger và OpenAPI endpoints
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", 
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**",
                                 "/swagger-resources/**", "/webjars/**", "/swagger-ui/index.html").permitAll()
 
                         // Public catalog & cart
@@ -106,7 +106,7 @@ public class SecurityConfig {
     /**
      * Cấu hình Authentication Provider với BCrypt encoder
      * Sử dụng builder pattern cho Spring Security 6+
-     * 
+     *
      * @param userDetailsService service để load user details
      * @return DaoAuthenticationProvider được cấu hình
      */

@@ -30,6 +30,7 @@ public class ReviewServiceImpl implements ReviewService {
     public void addReview(ReqReviewDTO req) {
         boolean exists = reviewRepository.existsByUser_IdAndProduct_Id(req.getUserId(), req.getProductId());
         if(exists == false){
+            System.out.println(exists);
             User user = userRepository.findById(req.getUserId()).get();
             Product product = productRepository.findById(req.getProductId()).get();
             Review review = new Review();
@@ -38,16 +39,25 @@ public class ReviewServiceImpl implements ReviewService {
             review.setUser(user);
             review.setProduct(product);
             reviewRepository.save(review);
+        }else{
+            throw new RuntimeException("Bạn đã đánh giá sản phẩm này rồi.");
         }
     }
 
     @Override
     public List<Review> findByProductId(Long productId) {
-        return reviewRepository.findByProduct_Id(productId);
+        List<Review> reviews = reviewRepository.findByProduct_Id(productId);
+        if(reviews.isEmpty()){
+            throw new RuntimeException("Không tìm thấy các đánh giá cho sản phẩm này.");
+        }
+        return reviews;
     }
 
     @Override
     public List<Review> findByUserId(Long userId) {
+        if(userRepository.findById(userId).isEmpty()){
+            throw new RuntimeException("Không tìm thấy đánh giá từ người dùng này.");
+        }
         return reviewRepository.findByUser_Id(userId);
     }
 

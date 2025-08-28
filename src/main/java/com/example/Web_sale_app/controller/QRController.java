@@ -12,7 +12,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @RestController
-@RequestMapping("/qr")
+@RequestMapping("/api/qr")
 public class QRController {
     private final RestClient restClient = RestClient.create();
 
