@@ -8,13 +8,18 @@ import com.example.Web_sale_app.entity.Product;
 import com.example.Web_sale_app.enums.ProductStatus;
 import com.example.Web_sale_app.repository.CategoryRepository;
 import com.example.Web_sale_app.repository.ProductRepository;
+import com.example.Web_sale_app.repository.CartItemRepository;
+import com.example.Web_sale_app.repository.OrderItemRepository;
+import com.example.Web_sale_app.repository.ReviewRepository;
 import com.example.Web_sale_app.service.CatalogService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,10 +29,20 @@ public class CatalogServiceImpl implements CatalogService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final CartItemRepository cartItemRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final ReviewRepository reviewRepository;
 
-    public CatalogServiceImpl(CategoryRepository categoryRepository, ProductRepository productRepository) {
+    public CatalogServiceImpl(CategoryRepository categoryRepository, 
+                             ProductRepository productRepository,
+                             CartItemRepository cartItemRepository,
+                             OrderItemRepository orderItemRepository,
+                             ReviewRepository reviewRepository) {
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     @Override
@@ -223,20 +238,87 @@ public class CatalogServiceImpl implements CatalogService {
 
     @Override
     public void hideProductAsAdmin(Long id) {
-        Product p = productRepository.findById(id)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-        p.setStatus(ProductStatus.HIDDEN);
-        p.setActive(false);
-        productRepository.save(p);
+        
+        // Kiểm tra xem sản phẩm có đang được sử dụng không
+        if (isProductInUse(id)) {
+            // Nếu đang được sử dụng, chỉ ẩn không xóa dữ liệu liên quan
+            product.setActive(false);
+            product.setStatus(ProductStatus.HIDDEN);
+        } else {
+            // Nếu không được sử dụng, có thể cleanup
+            cleanupProductRelatedData(id);
+            product.setActive(false);
+            product.setStatus(ProductStatus.HIDDEN);
+        }
+        
+        product.setUpdatedAt(OffsetDateTime.now());
+        productRepository.save(product);
     }
 
     @Override
     public void unhideProductAsAdmin(Long id) {
-        Product p = productRepository.findById(id)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-        p.setStatus(ProductStatus.PUBLISHED);
-        p.setActive(true);
-        productRepository.save(p);
+        
+        // Kiểm tra tình trạng sản phẩm trước khi unhide
+        if (product.getStock() > 0) {
+            product.setActive(true);
+            product.setStatus(ProductStatus.PUBLISHED);
+        } else {
+            // Nếu hết hàng, chỉ cho phép unhide nhưng không active
+            product.setActive(false);
+            product.setStatus(ProductStatus.OUT_OF_STOCK);
+        }
+        
+        product.setUpdatedAt(OffsetDateTime.now());
+        productRepository.save(product);
+    }
+
+    /**
+     * Kiểm tra xem sản phẩm có đang được sử dụng trong hệ thống không
+     */
+    private boolean isProductInUse(Long productId) {
+        // Kiểm tra trong CartItem
+        if (cartItemRepository.existsByProductId(productId)) {
+            return true;
+        }
+        
+        // Kiểm tra trong OrderItem
+        if (orderItemRepository.existsByProductId(productId)) {
+            return true;
+        }
+        
+        // Kiểm tra trong Review
+        if (reviewRepository.existsByProductId(productId)) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Cleanup dữ liệu liên quan đến sản phẩm (chỉ khi cần thiết)
+     */
+    @Transactional
+    private void cleanupProductRelatedData(Long productId) {
+        try {
+            // Chỉ cleanup các dữ liệu tạm thời như cart items
+            // KHÔNG xóa order items và reviews vì đó là dữ liệu lịch sử quan trọng
+            
+            // 1. Xóa cart items (giỏ hàng tạm thời)
+            cartItemRepository.deleteByProductId(productId);
+            
+            // 2. KHÔNG xóa order items - giữ lại lịch sử đơn hàng
+            // 3. KHÔNG xóa reviews - giữ lại đánh giá
+            
+            System.out.println("Cleaned up temporary data for product ID: " + productId);
+            
+        } catch (Exception e) {
+            System.err.println("Error cleaning up product data for ID " + productId + ": " + e.getMessage());
+            // Không throw exception, chỉ log lỗi
+        }
     }
 
     // CATEGORY CRUD
@@ -515,6 +597,8 @@ public class CatalogServiceImpl implements CatalogService {
             case DRAFT -> to == ProductStatus.PUBLISHED;
             case PUBLISHED -> to == ProductStatus.HIDDEN;
             case HIDDEN -> to == ProductStatus.PUBLISHED || to == ProductStatus.DRAFT;
+        case OUT_OF_STOCK -> to == ProductStatus.PUBLISHED || to == ProductStatus.HIDDEN;
+
         };
         
         if (!isValidTransition) {

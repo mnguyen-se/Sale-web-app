@@ -3,6 +3,8 @@ package com.example.Web_sale_app.controller;
 import com.example.Web_sale_app.dto.ProductDTO;
 import com.example.Web_sale_app.service.CatalogService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/products")
@@ -99,22 +102,30 @@ public class AdminProductController {
     }
 
     @PatchMapping("/{id}/hide")
-    public ResponseEntity<Void> hideProduct(@PathVariable Long id) {
+    public ResponseEntity<?> hideProduct(@PathVariable Long id) {
         try {
             catalogService.hideProductAsAdmin(id);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok().body(Map.of("message", "Product hidden successfully"));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to hide product: " + e.getMessage()));
         }
     }
 
     @PatchMapping("/{id}/unhide")
-    public ResponseEntity<Void> unhideProduct(@PathVariable Long id) {
+    public ResponseEntity<?> unhideProduct(@PathVariable Long id) {
         try {
             catalogService.unhideProductAsAdmin(id);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok().body(Map.of("message", "Product unhidden successfully"));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to unhide product: " + e.getMessage()));
         }
     }
 
