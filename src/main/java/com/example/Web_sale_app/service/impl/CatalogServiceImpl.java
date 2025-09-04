@@ -301,7 +301,6 @@ public class CatalogServiceImpl implements CatalogService {
     /**
      * Cleanup dữ liệu liên quan đến sản phẩm (chỉ khi cần thiết)
      */
-    @Transactional
     private void cleanupProductRelatedData(Long productId) {
         try {
             // Chỉ cleanup các dữ liệu tạm thời như cart items

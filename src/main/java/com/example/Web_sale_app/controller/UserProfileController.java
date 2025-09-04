@@ -70,7 +70,7 @@ public class UserProfileController {
         }
     }
     
-    // POST create new user
+    // POST create a new user
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
         try {
@@ -93,7 +93,7 @@ public class UserProfileController {
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         try {
-            // Check if user exists
+            // Check if a user exists
             Optional<User> existingUser = userService.findById(id);
             if (existingUser.isEmpty()) {
                 return ResponseEntity.notFound().build();
@@ -112,7 +112,7 @@ public class UserProfileController {
     @PatchMapping("/{id}/enabled")
     public ResponseEntity<String> updateUserEnabledStatus(@PathVariable Long id, @RequestParam boolean enabled) {
         try {
-            // First get the user by ID to get the username
+            // First, get the user by ID to get the username
             Optional<User> user = userService.findById(id);
             if (user.isEmpty()) {
                 return ResponseEntity.notFound().build();
@@ -132,7 +132,7 @@ public class UserProfileController {
     @PatchMapping("/{id}/role")
     public ResponseEntity<String> updateUserRole(@PathVariable Long id, @RequestParam Role role) {
         try {
-            // First get the user by ID to get the username
+            // First, get the user by ID to get the username
             Optional<User> user = userService.findById(id);
             if (user.isEmpty()) {
                 return ResponseEntity.notFound().build();

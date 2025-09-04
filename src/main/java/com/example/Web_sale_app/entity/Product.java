@@ -10,7 +10,12 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "products")
+@Table(
+        name = "products",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"name", "manufacturer", "category_id"})
+        }
+)
 @AllArgsConstructor
 @NoArgsConstructor
 @Data

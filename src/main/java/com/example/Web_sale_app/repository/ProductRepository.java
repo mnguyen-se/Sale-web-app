@@ -29,4 +29,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     // ===== ADDITIONAL USEFUL QUERIES =====
     long countByIsActiveTrue();
     boolean existsByNameIgnoreCase(String name);
+
+    //=====
+    boolean existsByNameAndCategoryIdAndManufacturer(String name, Long categoryId, String manufacturer);
 }

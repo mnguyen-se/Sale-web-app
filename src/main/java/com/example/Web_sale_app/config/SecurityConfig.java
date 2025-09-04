@@ -76,6 +76,9 @@ public class SecurityConfig {
                         // Preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        //GEMINI API
+                        .requestMatchers("/api/chat").permitAll()
+
                         // Auth
                         .requestMatchers("/api/auth/register"
                         , "/api/auth/login"
