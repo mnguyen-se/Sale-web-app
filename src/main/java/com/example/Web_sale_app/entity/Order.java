@@ -25,6 +25,8 @@ public class Order {
     @JoinColumn(name = "user_id")
     private User user;
 
+    private String description;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 

@@ -1,7 +1,5 @@
 package com.example.Web_sale_app.config;
 
-import com.example.Web_sale_app.WebSaleAppApplication;
-import com.example.Web_sale_app.entity.UserDetail;
 import com.example.Web_sale_app.service.BlacklistService;
 import com.example.Web_sale_app.service.JWTService;
 import com.example.Web_sale_app.service.MyUsersDetailService;
@@ -11,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;

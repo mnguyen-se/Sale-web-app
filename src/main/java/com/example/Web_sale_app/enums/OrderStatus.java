@@ -9,7 +9,8 @@ public enum OrderStatus {
     PROCESSING("Đang xử lý"),       
     SHIPPED("Đã giao vận"),         
     COMPLETED("Hoàn thành"),        
-    CANCELLED("Đã hủy");           
+    CANCELLED("Đã hủy"),
+    FAILED("Lỗi");
 
     private final String displayName;
 

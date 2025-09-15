@@ -7,12 +7,20 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
 public class HmacUtil {
-    public static String hmacSHA256(String data, String secret) {
+    public static String sign(String data, String secretKey) {
         try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8),"HmacSHA256"));
-            byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return DatatypeConverter.printHexBinary(hash).toLowerCase();
-        } catch(Exception e){ throw new RuntimeException(e); }
+            Mac hmac512 = Mac.getInstance("HmacSHA512");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
+            hmac512.init(secretKeySpec);
+            byte[] bytes = hmac512.doFinal(data.getBytes(StandardCharsets.UTF_8));
+
+            StringBuilder hash = new StringBuilder();
+            for (byte b : bytes) {
+                hash.append(String.format("%02x", b));
+            }
+            return hash.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Error while signing", e);
+        }
     }
 }

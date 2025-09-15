@@ -79,10 +79,16 @@ public class SecurityConfig {
                         //GEMINI API
                         .requestMatchers("/api/chat").permitAll()
 
+                        //payment
+                        .requestMatchers("/api/payment/**").permitAll()
+
                         // Auth
                         .requestMatchers("/api/auth/register"
                         , "/api/auth/login"
                         ,"/api/auth/confirm").permitAll()
+
+                        //Momo
+                        .requestMatchers("/api/momo/**").permitAll()
 
                         // OAuth2 endpoints
                         .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
