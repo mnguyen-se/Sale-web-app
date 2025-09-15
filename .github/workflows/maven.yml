@@ -19,6 +19,17 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      # 🛠 Convert tất cả file .properties sang UTF-8 không BOM
+      - name: Convert .properties files to UTF-8
+        run: |
+          sudo apt-get update && sudo apt-get install -y dos2unix
+          find ./src/main/resources -name "*.properties" -print0 | while IFS= read -r -d '' file; do
+            echo "Converting $file to UTF-8..."
+            iconv -f UTF-8 -t UTF-8 "$file" -o "$file.utf8" || cp "$file" "$file.utf8"
+            mv "$file.utf8" "$file"
+            dos2unix "$file"
+          done
+
       - name: Build with Maven
         run: mvn -B clean package -DskipTests --file pom.xml
 
